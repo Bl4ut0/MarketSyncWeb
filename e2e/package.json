@@ -1,0 +1,21 @@
+{
+  "name": "marketsync-web-e2e",
+  "version": "1.0.0",
+  "description": "Opaque-box E2E test suite, mocks, and Lua 5.1 addon bridge for MarketSyncWeb & MarketSync",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test:self": "node src/runner.mjs --self-test",
+    "test:dry-run": "node src/runner.mjs --dry-run",
+    "test:e2e": "node src/runner.mjs --mode both --tier all",
+    "test": "node src/runner.mjs"
+  },
+  "dependencies": {
+    "fengari": "^0.1.5",
+    "luaparse": "^0.3.1",
+    "playwright-core": "^1.65.1"
+  }
+}

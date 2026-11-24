@@ -1,0 +1,2 @@
+/harbor-auction*
+  Content-Security-Policy: frame-ancestors 'self' https://explore.bl4ut0.dev

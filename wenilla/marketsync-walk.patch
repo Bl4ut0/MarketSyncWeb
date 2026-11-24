@@ -1,0 +1,239 @@
+diff --git a/crates/benilla-app/src/survivors/hero.rs b/crates/benilla-app/src/survivors/hero.rs
+index 8bf9cc3..814c614 100644
+--- a/crates/benilla-app/src/survivors/hero.rs
++++ b/crates/benilla-app/src/survivors/hero.rs
+@@ -261,11 +261,12 @@ pub(super) fn drive_hero(
+             let map = selection.stage_def();
+             let center = arena(map);
+             let off = flat(pos - center);
+-            if off.length() > map.leash * 2.0 {
++            let leash = super::walkabout::radius(map.leash);
++            if off.length() > leash * 2.0 {
+                 // Just entered another battleground: start at its centre.
+                 pos = center;
+-            } else if off.length() > map.leash {
+-                let held = center + off.normalize() * map.leash;
++            } else if off.length() > leash {
++                let held = center + off.normalize() * leash;
+                 pos.x = held.x;
+                 pos.z = held.z;
+             }
+diff --git a/crates/benilla-app/src/survivors/hud.rs b/crates/benilla-app/src/survivors/hud.rs
+index 4e48b3e..641f91f 100644
+--- a/crates/benilla-app/src/survivors/hud.rs
++++ b/crates/benilla-app/src/survivors/hud.rs
+@@ -2213,7 +2213,7 @@ pub(super) fn show_panels(
+         set(root, p == Phase::Menu);
+     }
+     for root in &mut roots.p1() {
+-        set(root, p != Phase::Menu && p != Phase::GameOver);
++        set(root, !super::walkabout::active() && p != Phase::Menu && p != Phase::GameOver);
+     }
+     for root in &mut roots.p2() {
+         set(root, p == Phase::LevelUp);
+diff --git a/crates/benilla-app/src/survivors/mod.rs b/crates/benilla-app/src/survivors/mod.rs
+index fc9acfd..5e9d239 100644
+--- a/crates/benilla-app/src/survivors/mod.rs
++++ b/crates/benilla-app/src/survivors/mod.rs
+@@ -17,6 +17,7 @@ mod menu;
+ mod minimap;
+ mod mobility;
+ mod units;
++mod walkabout;
+ 
+ use benilla_world::schedule::WorldStage;
+ use bevy::prelude::*;
+@@ -61,7 +62,7 @@ impl Plugin for SurvivorsPlugin {
+                 (
+                     hero::drop_stray_buttons,
+                     hero::aim_cursor,
+-                    mobility::cast_mobility,
++                    mobility::cast_mobility.run_if(|| !walkabout::active()),
+                     hero::drive_hero,
+                     hero::place_camera,
+                 )
+@@ -84,6 +85,7 @@ impl Plugin for SurvivorsPlugin {
+                     .chain()
+                     .after(WorldStage::Input)
+                     .run_if(in_state(Phase::Playing))
++                    .run_if(|| !walkabout::active())
+                     // Entering a battleground raises its loading screen: the run waits behind it.
+                     .run_if(|l: Res<crate::loading_screen::LoadingScreen>| !l.covering()),
+             )
+@@ -136,7 +138,9 @@ impl Plugin for SurvivorsPlugin {
+             .add_systems(OnEnter(Phase::Paused), pause)
+             .add_systems(OnEnter(Phase::GameOver), unpause)
+             .add_systems(OnEnter(Phase::Menu), (unpause, reset_run));
+-        if let Some(auto) = auto::from_env() {
++        if walkabout::active() {
++            walkabout::register(app);
++        } else if let Some(auto) = auto::from_env() {
+             app.insert_resource(auto)
+                 .add_systems(
+                     Update,
+diff --git a/crates/benilla-app/src/survivors/walkabout.rs b/crates/benilla-app/src/survivors/walkabout.rs
+new file mode 100644
+index 0000000..13b5084
+--- /dev/null
++++ b/crates/benilla-app/src/survivors/walkabout.rs
+@@ -0,0 +1,160 @@
++//! Optional private MarketSync walkthrough using the existing world renderer and controller.
++
++use std::sync::OnceLock;
++
++use benilla_world::{schedule::WorldStage, view::WorldCamera, world_point::WorldPoint};
++use bevy::{prelude::*, window::PrimaryWindow};
++
++use super::{Phase, Run, Selection, hero, units};
++
++const WALK_RADIUS: f32 = 26.0;
++const TALK_RANGE: f32 = 4.0;
++
++pub(super) fn active() -> bool {
++    static ENABLED: OnceLock<bool> = OnceLock::new();
++    *ENABLED.get_or_init(|| crate::webenv::var("WOW_MARKETSYNC_WALK").as_deref() == Some("1"))
++}
++
++pub(super) fn radius(normal: f32) -> f32 {
++    if active() {
++        normal.min(WALK_RADIUS)
++    } else {
++        normal
++    }
++}
++
++pub(super) fn register(app: &mut App) {
++    app.insert_resource(hero::CamRig {
++        mode: hero::CamMode::Orbit,
++        dist: 8.0,
++        pitch: 0.34,
++        ..Default::default()
++    });
++    app.add_systems(
++        Update,
++        (spawn_broker, interact)
++            .chain()
++            .after(WorldStage::Input)
++            .run_if(in_state(Phase::Playing)),
++    );
++    app.add_systems(OnExit(Phase::Playing), hide_broker);
++}
++
++#[derive(Component)]
++struct Broker;
++
++fn spawn_broker(
++    mut commands: Commands,
++    mut run: ResMut<Run>,
++    selection: Res<Selection>,
++    world: WorldPoint,
++    brokers: Query<(), With<Broker>>,
++) {
++    if !brokers.is_empty() {
++        return;
++    }
++    let Some(&(display, race, sex)) = selection
++        .looks
++        .iter()
++        .find(|(_, race, _)| *race != run.race)
++        .or_else(|| selection.look.and_then(|i| selection.looks.get(i)))
++    else {
++        return;
++    };
++    let mut pos = hero::arena(selection.stage_def()) + Vec3::new(0.0, 0.0, -8.0);
++    let Some(height) = world.terrain_height_under(pos) else {
++        return;
++    };
++    pos.y = height;
++    let actor = units::spawn_unit(
++        &mut commands,
++        &units::UnitSpec {
++            serial: run.guid(),
++            display,
++            scale: 1.0,
++            level: 1,
++            faction: units::FACTION_FRIENDLY,
++            bytes0: u32::from(race) | (u32::from(sex) << 16),
++            weapons: &[],
++            sheath: 0,
++        },
++        pos,
++        std::f32::consts::PI,
++    );
++    commands.entity(actor).insert(Broker);
++}
++
++fn interact(
++    keys: Res<ButtonInput<KeyCode>>,
++    mouse: Res<ButtonInput<MouseButton>>,
++    window: Query<&Window, With<PrimaryWindow>>,
++    camera: Query<(&Camera, &GlobalTransform), With<WorldCamera>>,
++    broker: Query<&Transform, With<Broker>>,
++    player: Query<&Transform, With<hero::Hero>>,
++    loading: Res<crate::loading_screen::LoadingScreen>,
++) {
++    if loading.covering() {
++        return;
++    }
++    let (Ok(npc), Ok(hero), Ok((camera, view)), Ok(window)) = (
++        broker.single(),
++        player.single(),
++        camera.single(),
++        window.single(),
++    ) else {
++        return;
++    };
++    let reachable = npc.translation.distance(hero.translation) <= TALK_RANGE;
++    let marker = camera
++        .world_to_viewport(view, npc.translation + Vec3::Y * 2.4)
++        .ok();
++    let hovered = marker
++        .zip(window.cursor_position())
++        .is_some_and(|(marker, cursor)| {
++            let foot = camera
++                .world_to_viewport(view, npc.translation)
++                .unwrap_or(marker);
++            (cursor.x - marker.x).abs() <= 26.0
++                && cursor.y >= marker.y - 14.0
++                && cursor.y <= foot.y + 10.0
++        });
++    let open = reachable
++        && (keys.just_pressed(KeyCode::KeyE)
++            || (hovered && mouse.just_released(MouseButton::Right)));
++    let label = marker
++        .filter(|p| p.x >= 0.0 && p.x <= window.width() && p.y >= 0.0 && p.y <= window.height())
++        .map(|p| (p.x / window.width(), p.y / window.height()));
++    publish(label, reachable, hovered, open);
++}
++
++fn hide_broker() {
++    publish(None, false, false, false);
++}
++
++#[cfg(target_arch = "wasm32")]
++fn publish(marker: Option<(f32, f32)>, reachable: bool, hovered: bool, open: bool) {
++    use wasm_bindgen::JsValue;
++
++    let Some(window) = web_sys::window() else {
++        return;
++    };
++    let Ok(origin) = window.location().origin() else {
++        return;
++    };
++    let message = js_sys::Object::new();
++    let (x, y) = marker.unwrap_or((-1.0, -1.0));
++    for (name, value) in [
++        ("type", JsValue::from_str("marketsync:walk-auctioneer")),
++        ("x", JsValue::from_f64(f64::from(x))),
++        ("y", JsValue::from_f64(f64::from(y))),
++        ("reachable", JsValue::from_bool(reachable)),
++        ("hovered", JsValue::from_bool(hovered)),
++        ("open", JsValue::from_bool(open)),
++    ] {
++        let _ = js_sys::Reflect::set(&message, &JsValue::from_str(name), &value);
++    }
++    let _ = window.post_message(&message, &origin);
++}
++
++#[cfg(not(target_arch = "wasm32"))]
++fn publish(_: Option<(f32, f32)>, _: bool, _: bool, _: bool) {}

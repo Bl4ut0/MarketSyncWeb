@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+/third_party/azeroth-survivors-re/
+
+# Build & TypeScript artifacts
+dist/
+shared/dist/
+server/dist/
+client/dist/
+*.tsbuildinfo
+
+# Local databases & runtime state
+*.sqlite
+*.sqlite3
+*.db
+.wrangler/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Test & Playwright outputs
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# Logs & OS junk
+*.log
+.DS_Store
+Thumbs.db

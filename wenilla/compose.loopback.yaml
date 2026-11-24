@@ -1,0 +1,7 @@
+# Apply over the upstream wenilla-realm compose.yaml and start only mariadb, db-init, and realm.
+services:
+  realm:
+    environment:
+      REALM_PUBLIC_URL: http://localhost:8090
+    ports:
+      - "127.0.0.1:8090:8090"

@@ -1,0 +1,344 @@
+{
+  "version": 1,
+  "crc32Checks": [
+    {
+      "id": "empty",
+      "input": "",
+      "expectedHex": "00000000"
+    },
+    {
+      "id": "standard-check-value",
+      "input": "123456789",
+      "expectedHex": "cbf43926"
+    },
+    {
+      "id": "utf8-multibyte",
+      "input": "Flasks — Löwenbräu",
+      "expectedHex": "668347ba"
+    }
+  ],
+  "canonicalVectors": [
+    {
+      "id": "minimal-basics",
+      "input": {
+        "v": 1,
+        "n": "Basics",
+        "i": [
+          {
+            "id": 13464,
+            "q": 1
+          }
+        ]
+      },
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W3siaWQiOjEzNDY0LCJxIjoxfV19.34ace25d"
+    },
+    {
+      "id": "forever-full-metadata",
+      "input": {
+        "v": 1,
+        "n": "Raid Prep",
+        "f": "forever",
+        "r": "pvp",
+        "fa": "Horde",
+        "i": [
+          {
+            "id": 13444,
+            "s": 0,
+            "q": 20,
+            "m": 99999999999,
+            "nm": "Major Mana Potion",
+            "nt": "Bring 2 stacks",
+            "d": 0,
+            "a": 1
+          },
+          {
+            "id": 13005,
+            "s": 4512,
+            "q": 1,
+            "m": 0,
+            "nm": "",
+            "nt": "",
+            "d": 1,
+            "a": 0
+          }
+        ]
+      },
+      "expectedDecoded": {
+        "v": 1,
+        "n": "Raid Prep",
+        "f": "forever",
+        "r": "pvp",
+        "fa": "Horde",
+        "i": [
+          {
+            "id": 13444,
+            "q": 20,
+            "m": 99999999999,
+            "nm": "Major Mana Potion",
+            "nt": "Bring 2 stacks",
+            "a": 1
+          },
+          {
+            "id": 13005,
+            "s": 4512,
+            "q": 1,
+            "d": 1
+          }
+        ]
+      },
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiUmFpZCBQcmVwIiwiZiI6ImZvcmV2ZXIiLCJyIjoicHZwIiwiZmEiOiJIb3JkZSIsImkiOlt7ImlkIjoxMzQ0NCwicSI6MjAsIm0iOjk5OTk5OTk5OTk5LCJubSI6Ik1ham9yIE1hbmEgUG90aW9uIiwibnQiOiJCcmluZyAyIHN0YWNrcyIsImEiOjF9LHsiaWQiOjEzMDA1LCJzIjo0NTEyLCJxIjoxLCJkIjoxfV19.5dfb1207"
+    },
+    {
+      "id": "utf8-and-escapes",
+      "input": {
+        "v": 1,
+        "n": "Flasks — \"Naxx\" & Co.",
+        "f": "anniversary",
+        "r": "nightslayer",
+        "fa": "Alliance",
+        "i": [
+          {
+            "id": 13511,
+            "q": 4,
+            "nm": "Elixir of Löwenbräu",
+            "nt": "Check \\ AH\tline1\nline2",
+            "a": 1
+          }
+        ]
+      },
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiRmxhc2tzIOKAlCBcIk5heHhcIiAmIENvLiIsImYiOiJhbm5pdmVyc2FyeSIsInIiOiJuaWdodHNsYXllciIsImZhIjoiQWxsaWFuY2UiLCJpIjpbeyJpZCI6MTM1MTEsInEiOjQsIm5tIjoiRWxpeGlyIG9mIEzDtndlbmJyw6R1IiwibnQiOiJDaGVjayBcXCBBSFx0bGluZTFcbmxpbmUyIiwiYSI6MX1dfQ.a967d1c3"
+    },
+    {
+      "id": "classic-pet-cage",
+      "input": {
+        "v": 1,
+        "n": "Pet Cages",
+        "f": "classic",
+        "r": "pagle",
+        "fa": "CrossFaction",
+        "i": [
+          {
+            "id": 82800,
+            "s": 48213,
+            "q": 2,
+            "m": 1500000,
+            "nm": "Anubisath Idol"
+          }
+        ]
+      },
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiUGV0IENhZ2VzIiwiZiI6ImNsYXNzaWMiLCJyIjoicGFnbGUiLCJmYSI6IkNyb3NzRmFjdGlvbiIsImkiOlt7ImlkIjo4MjgwMCwicyI6NDgyMTMsInEiOjIsIm0iOjE1MDAwMDAsIm5tIjoiQW51YmlzYXRoIElkb2wifV19.fc979b6b"
+    },
+    {
+      "id": "retail-empty-list",
+      "input": {
+        "v": 1,
+        "n": "Empty Watch",
+        "f": "retail",
+        "r": "region",
+        "fa": "Commodities",
+        "i": []
+      },
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiRW1wdHkgV2F0Y2giLCJmIjoicmV0YWlsIiwiciI6InJlZ2lvbiIsImZhIjoiQ29tbW9kaXRpZXMiLCJpIjpbXX0.a786b501"
+    },
+    {
+      "id": "max-64char-name",
+      "input": {
+        "v": 1,
+        "n": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "i": [
+          {
+            "id": 13468,
+            "q": 1,
+            "m": 1
+          }
+        ]
+      },
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQSIsImkiOlt7ImlkIjoxMzQ2OCwicSI6MSwibSI6MX1dfQ.8b2b42a6"
+    }
+  ],
+  "nonCanonicalDecodeVectors": [
+    {
+      "id": "reordered-keys-and-defaults",
+      "wire": "!MS1!IHsgImkiIDogWyB7ICJhIiA6IDAgLCAiZCIgOiAwICwgInMiIDogMCAsICJpZCIgOiAxMzQ2NCB9IF0gLCAibiIgOiAiQmFzaWNzIiAsICJ2IiA6IDEgfSA.29510114",
+      "expectedDecoded": {
+        "v": 1,
+        "n": "Basics",
+        "i": [
+          {
+            "id": 13464,
+            "q": 1
+          }
+        ]
+      },
+      "expectedCanonicalWire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W3siaWQiOjEzNDY0LCJxIjoxfV19.34ace25d"
+    },
+    {
+      "id": "unicode-escapes-and-booleans",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiRmxhc2tzIFx1MjAxNCBcIk5heHhcIiAmIENvLiIsImkiOlt7ImlkIjoxMzUxMSwicSI6NCwiZCI6ZmFsc2UsImEiOnRydWUsIm50IjoiU2xhc2ggXC8gT0sifV19.84d87acc",
+      "expectedDecoded": {
+        "v": 1,
+        "n": "Flasks — \"Naxx\" & Co.",
+        "i": [
+          {
+            "id": 13511,
+            "q": 4,
+            "nt": "Slash / OK",
+            "a": 1
+          }
+        ]
+      }
+    }
+  ],
+  "invalidVectors": [
+    {
+      "id": "empty-string",
+      "wire": "",
+      "expectedCode": "INVALID_PREFIX"
+    },
+    {
+      "id": "missing-bang-prefix",
+      "wire": "MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W119.00000000",
+      "expectedCode": "INVALID_PREFIX"
+    },
+    {
+      "id": "lowercase-prefix",
+      "wire": "!ms1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W119.00000000",
+      "expectedCode": "INVALID_PREFIX"
+    },
+    {
+      "id": "unsupported-prefix-v2",
+      "wire": "!MS2!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W119.00000000",
+      "expectedCode": "INVALID_PREFIX"
+    },
+    {
+      "id": "missing-crc-dot",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W119",
+      "expectedCode": "INVALID_FORMAT"
+    },
+    {
+      "id": "extra-dot",
+      "wire": "!MS1!eyJ2Ijox.extra.34ace25d",
+      "expectedCode": "INVALID_FORMAT"
+    },
+    {
+      "id": "empty-payload",
+      "wire": "!MS1!.00000000",
+      "expectedCode": "INVALID_BASE64URL"
+    },
+    {
+      "id": "bad-base64-plus",
+      "wire": "!MS1!eyJ2+jox.34ace25d",
+      "expectedCode": "INVALID_BASE64URL"
+    },
+    {
+      "id": "bad-base64-padding",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W3siaWQiOjEzNDY0LCJxIjoxfV19=.34ace25d",
+      "expectedCode": "INVALID_BASE64URL"
+    },
+    {
+      "id": "bad-base64-mod4-eq-1",
+      "wire": "!MS1!abcde.34ace25d",
+      "expectedCode": "INVALID_BASE64URL"
+    },
+    {
+      "id": "nonzero-trailing-pad-bits",
+      "wire": "!MS1!ab.00000000",
+      "expectedCode": "INVALID_BASE64URL"
+    },
+    {
+      "id": "uppercase-crc",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W3siaWQiOjEzNDY0LCJxIjoxfV19.34ACE25D",
+      "expectedCode": "INVALID_FORMAT"
+    },
+    {
+      "id": "short-crc",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W3siaWQiOjEzNDY0LCJxIjoxfV19.34ace25",
+      "expectedCode": "INVALID_FORMAT"
+    },
+    {
+      "id": "tampered-payload-crc-mismatch",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQmFzaWNzIiwiaSI6W3siaWQiOjEzNDY0LCJxIjoyfV19.34ace25d",
+      "expectedCode": "CHECKSUM_MISMATCH"
+    },
+    {
+      "id": "invalid-utf8-bytes",
+      "wire": "!MS1!e_99.1a75ae50",
+      "expectedCode": "INVALID_UTF8"
+    },
+    {
+      "id": "invalid-json",
+      "wire": "!MS1!e25vdCBqc29u.37515da9",
+      "expectedCode": "INVALID_JSON"
+    },
+    {
+      "id": "unsupported-version-2",
+      "wire": "!MS1!eyJ2IjoyLCJuIjoiVGVzdCIsImkiOltdfQ.ae3db07d",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "id": "string-version-1",
+      "wire": "!MS1!eyJ2IjoiMSIsIm4iOiJUZXN0IiwiaSI6W119.3f07284b",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "id": "whitespace-only-name",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiICAgIiwiaSI6W119.2d5b683a",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "name-exceeds-64-chars",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUEiLCJpIjpbXX0.53c9f478",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "invalid-flavor",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImYiOiJzb2QiLCJpIjpbXX0.99618d87",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "invalid-faction",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImZhIjoiU2NvdXJnZSIsImkiOltdfQ.b68936a6",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "non-array-items",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOnt9fQ.ac5d9ff5",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-id-zero",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjowLCJxIjoxfV19.4a178709",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-qty-zero",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjoxMzQ2NCwicSI6MH1dfQ.6468e7fd",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-qty-fractional",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjoxMzQ2NCwicSI6MS41fV19.b5790976",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-suffix-negative",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjoxMzQ2NCwicyI6LTEsInEiOjF9XX0.3b23faec",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-maxprice-overflow",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjoxMzQ2NCwicSI6MSwibSI6MTAwMDAwMDAwMDAwfV19.e68b4bf3",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-done-invalid",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjoxMzQ2NCwicSI6MSwiZCI6Mn1dfQ.b8f4893a",
+      "expectedCode": "INVALID_SCHEMA"
+    },
+    {
+      "id": "item-alert-invalid",
+      "wire": "!MS1!eyJ2IjoxLCJuIjoiVGVzdCIsImkiOlt7ImlkIjoxMzQ2NCwicSI6MSwiYSI6InllcyJ9XX0.3c55c824",
+      "expectedCode": "INVALID_SCHEMA"
+    }
+  ]
+}

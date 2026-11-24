@@ -1,0 +1,32 @@
+MarketSyncWeb
+Copyright (C) 2026 MarketSyncWeb Contributors
+
+All original source code in this repository (including `shared/`, `server/`,
+`client/src/`, `e2e/`, and build/configuration scripts) is free software
+licensed under the GNU General Public License version 3 only (`GPL-3.0-only`).
+See the `LICENSE` file in the root of this repository for the full license text.
+
+================================================================================
+TRADEMARK & PROPRIETARY BLIZZARD ASSET EXCLUSION
+================================================================================
+
+The GNU General Public License v3.0 does NOT grant any rights to trademarks,
+service marks, logos, or proprietary artwork owned by Blizzard Entertainment,
+Inc., and the GPL-3.0 license explicitly EXCLUDES:
+
+1. All image, logo, icon, and brand assets located under:
+   `client/public/assets/blizzard-trademarks/`
+2. All remote Blizzard Entertainment game logos, icons, and media assets
+   referenced or loaded from Blizzard Contentstack / Blizzard Game Data CDNs
+   (including `blz-contentstack-images.akamaized.net` and `render.worldofwarcraft.com`).
+
+World of Warcraft®, Battle.net®, and Blizzard Entertainment™ are trademarks or
+registered trademarks of Blizzard Entertainment, Inc. in the U.S. and/or other
+countries. These assets remain the exclusive property of Blizzard Entertainment,
+Inc. and are referenced or included unaltered solely for non-commercial community
+compatibility in accordance with Blizzard Entertainment's Fan Site & Trademark
+Guidelines.
+
+NON-AFFILIATION DISCLAIMER:
+MarketSyncWeb is an independent open-source community project and is not
+affiliated with, endorsed by, or sponsored by Blizzard Entertainment, Inc.

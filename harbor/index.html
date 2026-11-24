@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lantern Quay | MarketSync</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main>
+    <div id="world" aria-label="Lantern Quay 3D harbor"></div>
+    <header><a id="market" href="https://mstest.bl4ut0.dev/">MarketSync</a><span>Explore / Lantern Quay</span></header>
+    <section id="arrival" class="card">
+      <h1>Lantern Quay</h1>
+      <p>Walk the docks and visit a broker to browse that edition’s Auction House.</p>
+      <div id="character">
+        <label for="name">Character name</label><input id="name" maxlength="24" autocomplete="off" placeholder="Traveler">
+        <label for="coat">Character</label><select id="coat"><option value="0">Dockhand · rust</option><option value="1">Merchant · sea green</option><option value="2">Scout · indigo</option></select>
+        <button type="button" id="enter">Enter the harbor</button>
+      </div>
+      <p id="error" role="alert" hidden>3D rendering is unavailable. You can still open the Auction House using the MarketSync link above.</p>
+    </section>
+    <section id="hud" hidden>
+      <div class="status"><strong id="player"></strong><span id="hint" aria-live="polite"></span></div>
+      <button type="button" id="interact" hidden></button>
+      <p class="keys">WASD or arrows to move · Right-click a broker or press E</p>
+      <div class="touch" aria-label="Movement controls">
+        <button data-key="ArrowUp" aria-label="Move up">↑</button>
+        <button data-key="ArrowLeft" aria-label="Move left">←</button>
+        <button data-key="ArrowDown" aria-label="Move down">↓</button>
+        <button data-key="ArrowRight" aria-label="Move right">→</button>
+      </div>
+    </section>
+    <dialog id="auction" aria-labelledby="auction-title">
+      <div class="auction-header">
+        <h2 id="auction-title">Auction House</h2>
+        <button type="button" id="close-auction" aria-label="Close auction house" autofocus>×</button>
+      </div>
+      <iframe id="auction-listings" title="Auction listings and MarketSync analytics" referrerpolicy="origin"></iframe>
+    </dialog>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

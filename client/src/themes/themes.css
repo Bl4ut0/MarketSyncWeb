@@ -1,0 +1,191 @@
+/* --------------------------------------------------------------------------
+ * Era-Specific Blizzard Armory + In-Game Auction House Themes
+ * Shared edition palette for the desktop and mobile shells.
+ * -------------------------------------------------------------------------- */
+
+:is([data-testid="app-shell"], .ms-mobile-root) {
+  --font-sans: 'Segoe UI', Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Cinzel', Georgia, 'Palatino Linotype', 'Book Antiqua', serif;
+  --font-mono: 'Cascadia Code', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --q-0: #9d9d9d;
+  --q-1: #f2f2f2;
+  --q-2: #3ce63c;
+  --q-3: #4ea3ff;
+  --q-4: #c678ff;
+  --q-5: #ff9c2a;
+  --q-6: #e6cc80;
+  --q-7: #00ccff;
+
+  --coin-gold: #ffd24d;
+  --coin-silver: #cfd6e0;
+  --coin-copper: #df8b52;
+
+  /* Default fallback tokens (Forever) */
+  --bg-page: #0a0d13;
+  --bg-backdrop: radial-gradient(circle at 20% 0%, rgba(212, 168, 67, 0.14), transparent 55%),
+    radial-gradient(circle at 85% 12%, rgba(78, 128, 214, 0.12), transparent 50%),
+    linear-gradient(180deg, #0b0e15 0%, #090c11 100%);
+  --bg-header: linear-gradient(180deg, rgba(25, 31, 44, 0.96) 0%, rgba(16, 20, 29, 0.96) 100%);
+  --bg-panel: #141923;
+  --bg-panel-elevated: #1b2230;
+  --bg-input: #0e131b;
+  --bg-row-hover: rgba(212, 168, 67, 0.08);
+  --bg-row-stripe: rgba(255, 255, 255, 0.02);
+
+  --border-primary: rgba(212, 168, 67, 0.36);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-focus: #f3d27a;
+
+  --text-primary: #f2ead8;
+  --text-secondary: #b6bece;
+  --text-muted: #828ca0;
+  --text-accent: #f3d27a;
+
+  --accent-primary: #d4a843;
+  --accent-secondary: #5c8ee6;
+  --accent-contrast: #12100a;
+  --accent-glow: 0 0 22px rgba(212, 168, 67, 0.18);
+  --panel-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 232, 179, 0.08);
+  --frame-radius: 10px;
+  --badge-bg: rgba(212, 168, 67, 0.15);
+
+  background-color: var(--bg-page);
+  background-image: var(--bg-backdrop);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+/* 1. WoW: Forever — Deep Obsidian/Iron Slate + Royal Gold Filigree */
+:is([data-testid="app-shell"], .ms-mobile-root)[data-flavor="forever"] {
+  --bg-page: #0a0d13;
+  --bg-backdrop: radial-gradient(circle at 18% 0%, rgba(212, 168, 67, 0.17), transparent 52%),
+    radial-gradient(circle at 86% 10%, rgba(84, 126, 206, 0.13), transparent 48%),
+    linear-gradient(180deg, #0c1018 0%, #090b10 100%);
+  --bg-header: linear-gradient(180deg, #1b2231 0%, #111620 100%);
+  --bg-panel: #141923;
+  --bg-panel-elevated: #1b2231;
+  --bg-input: #0d1119;
+  --bg-row-hover: rgba(212, 168, 67, 0.1);
+  --border-primary: rgba(212, 168, 67, 0.42);
+  --border-subtle: rgba(212, 168, 67, 0.15);
+  --border-focus: #f4d378;
+  --text-primary: #f2ead8;
+  --text-secondary: #bcc5d6;
+  --text-muted: #8893a8;
+  --text-accent: #f4d378;
+  --accent-primary: #d4a843;
+  --accent-secondary: #5c8ee6;
+  --accent-contrast: #141008;
+  --accent-glow: 0 0 24px rgba(212, 168, 67, 0.22);
+  --frame-radius: 8px;
+  --badge-bg: rgba(212, 168, 67, 0.16);
+}
+
+/* 2. WoW Classic Era — Warm Aged Bronze/Parchment Vellum & Ironwood */
+:is([data-testid="app-shell"], .ms-mobile-root)[data-flavor="classicEra"] {
+  --bg-page: #18110b;
+  --bg-backdrop: radial-gradient(circle at 22% 0%, rgba(224, 173, 99, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 15%, rgba(164, 92, 42, 0.14), transparent 50%),
+    linear-gradient(180deg, #1d140d 0%, #130d08 100%);
+  --bg-header: linear-gradient(180deg, #2e2014 0%, #21160e 100%);
+  --bg-panel: #251a11;
+  --bg-panel-elevated: #312317;
+  --bg-input: #17100a;
+  --bg-row-hover: rgba(224, 173, 99, 0.11);
+  --bg-row-stripe: rgba(255, 224, 178, 0.025);
+  --border-primary: rgba(205, 146, 76, 0.48);
+  --border-subtle: rgba(205, 146, 76, 0.18);
+  --border-focus: #ebb973;
+  --text-primary: #f6ebd6;
+  --text-secondary: #d4bea0;
+  --text-muted: #a48b6d;
+  --text-accent: #ebb973;
+  --accent-primary: #c98a42;
+  --accent-secondary: #9c4a2b;
+  --accent-contrast: #1a1007;
+  --accent-glow: 0 0 20px rgba(201, 138, 66, 0.2);
+  --panel-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 218, 160, 0.1);
+  --frame-radius: 8px;
+  --badge-bg: rgba(201, 138, 66, 0.2);
+}
+
+/* 3. WoW Classic Anniversary — Fel-Emerald & Dark Arcane Obsidian-Brass */
+:is([data-testid="app-shell"], .ms-mobile-root)[data-flavor="anniversary"] {
+  --bg-page: #07110c;
+  --bg-backdrop: radial-gradient(circle at 18% 0%, rgba(47, 214, 123, 0.16), transparent 52%),
+    radial-gradient(circle at 82% 8%, rgba(214, 166, 79, 0.14), transparent 48%),
+    linear-gradient(180deg, #0a1711 0%, #060e0a 100%);
+  --bg-header: linear-gradient(180deg, #12261d 0%, #0b1913 100%);
+  --bg-panel: #0f1f18;
+  --bg-panel-elevated: #152b21;
+  --bg-input: #08130e;
+  --bg-row-hover: rgba(47, 214, 123, 0.09);
+  --border-primary: rgba(47, 214, 123, 0.38);
+  --border-subtle: rgba(214, 166, 79, 0.18);
+  --border-focus: #49e691;
+  --text-primary: #e4f5ec;
+  --text-secondary: #a8ccb9;
+  --text-muted: #709984;
+  --text-accent: #49e691;
+  --accent-primary: #2fd67b;
+  --accent-secondary: #d6a64f;
+  --accent-contrast: #06140c;
+  --accent-glow: 0 0 24px rgba(47, 214, 123, 0.22);
+  --frame-radius: 8px;
+  --badge-bg: rgba(47, 214, 123, 0.16);
+}
+
+/* 4. Mists of Pandaria Classic — Jade Celadon, Imperial Gold & Lacquered Ebony */
+:is([data-testid="app-shell"], .ms-mobile-root)[data-flavor="classic"] {
+  --bg-page: #081211;
+  --bg-backdrop: radial-gradient(circle at 20% 0%, rgba(56, 201, 154, 0.16), transparent 50%),
+    radial-gradient(circle at 80% 10%, rgba(229, 185, 76, 0.15), transparent 50%),
+    linear-gradient(180deg, #0b1817 0%, #07100f 100%);
+  --bg-header: linear-gradient(180deg, #132826 0%, #0c1b19 100%);
+  --bg-panel: #10201e;
+  --bg-panel-elevated: #162c29;
+  --bg-input: #091413;
+  --bg-row-hover: rgba(56, 201, 154, 0.1);
+  --border-primary: rgba(229, 185, 76, 0.42);
+  --border-subtle: rgba(56, 201, 154, 0.2);
+  --border-focus: #5be0b5;
+  --text-primary: #edf6f1;
+  --text-secondary: #b0cdc5;
+  --text-muted: #769b91;
+  --text-accent: #e5b94c;
+  --accent-primary: #38c99a;
+  --accent-secondary: #e5b94c;
+  --accent-contrast: #061612;
+  --accent-glow: 0 0 24px rgba(56, 201, 154, 0.2);
+  --frame-radius: 8px;
+  --badge-bg: rgba(56, 201, 154, 0.16);
+}
+
+/* 5. World of Warcraft: Midnight (Retail) — Void-Indigo, Silver-Starlight Glass */
+:is([data-testid="app-shell"], .ms-mobile-root)[data-flavor="retail"] {
+  --bg-page: #060812;
+  --bg-backdrop: radial-gradient(circle at 15% 0%, rgba(140, 107, 255, 0.22), transparent 52%),
+    radial-gradient(circle at 85% 5%, rgba(103, 201, 255, 0.16), transparent 46%),
+    linear-gradient(180deg, #090d1e 0%, #050710 100%);
+  --bg-header: linear-gradient(180deg, rgba(20, 26, 52, 0.92) 0%, rgba(12, 16, 35, 0.94) 100%);
+  --bg-panel: rgba(16, 21, 41, 0.92);
+  --bg-panel-elevated: rgba(24, 31, 60, 0.94);
+  --bg-input: #0a0e20;
+  --bg-row-hover: rgba(140, 107, 255, 0.12);
+  --border-primary: rgba(140, 107, 255, 0.44);
+  --border-subtle: rgba(160, 185, 255, 0.16);
+  --border-focus: #a78bfa;
+  --text-primary: #eef3ff;
+  --text-secondary: #b8c4e6;
+  --text-muted: #7f8eb8;
+  --text-accent: #9bd8ff;
+  --accent-primary: #8c6bff;
+  --accent-secondary: #67c9ff;
+  --accent-contrast: #ffffff;
+  --accent-glow: 0 0 26px rgba(140, 107, 255, 0.26);
+  --panel-shadow: 0 14px 36px rgba(2, 4, 16, 0.6), inset 0 1px 0 rgba(190, 210, 255, 0.1);
+  --frame-radius: 8px;
+  --badge-bg: rgba(140, 107, 255, 0.18);
+}

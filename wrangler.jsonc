@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "marketsync-web",
+  "main": "server/src/worker.cf.ts",
+  "compatibility_date": "2026-04-01",
+  "routes": [
+    {
+      "pattern": "mstest.bl4ut0.dev",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    "MARKETSYNC_DATA_BASE_URL": "https://raw.githubusercontent.com/Bl4ut0/MarketSyncData/master"
+  },
+  "triggers": {
+    "crons": ["5 * * * *"]
+  }
+}

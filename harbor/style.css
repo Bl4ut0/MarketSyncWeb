@@ -1,0 +1,37 @@
+:root { color-scheme: dark; font: 16px system-ui, sans-serif; color: #faf3e4; background: #173940; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main, #world { position: fixed; inset: 0; }
+canvas { display: block; width: 100%; height: 100%; }
+header { position: absolute; top: 1rem; left: 1rem; right: 1rem; display: flex; flex-wrap: wrap; gap: .7rem 1rem; align-items: center; padding: .65rem 1rem; width: fit-content; border: 1px solid #ab8651; background: #14282bed; }
+header span { color: #e1c898; }
+a { color: #f9d486; }
+.card { position: absolute; left: clamp(1rem, 7vw, 8rem); bottom: clamp(1rem, 12vh, 8rem); width: min(24rem, calc(100% - 2rem)); max-height: calc(100dvh - 5rem); overflow: auto; padding: clamp(1rem, 3vw, 2rem); background: #152b2df7; border: 1px solid #ab8651; box-shadow: 0 1rem 4rem #081919a6; }
+h1 { font: 2.5rem/1 Georgia, serif; color: #ffdc98; margin: 0 0 .8rem; }
+p { line-height: 1.45; }
+#character { display: grid; gap: .5rem; }
+button, input, select { font: inherit; padding: .55rem .65rem; border-radius: .25rem; border: 1px solid #ab8651; }
+input, select { background: #0f2326; color: inherit; width: 100%; margin-bottom: .45rem; }
+button { background: #f4ca79; color: #201b12; font-weight: 700; cursor: pointer; }
+:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+#hud { position: absolute; inset: 0; pointer-events: none; }
+.status { position: absolute; top: 4.5rem; left: 1rem; padding: .55rem .75rem; background: #152b2deb; border: 1px solid #ab8651; display: grid; gap: .2rem; }
+#hint { font-size: .88rem; color: #f8d293; }
+#interact { position: absolute; bottom: 4rem; left: 50%; transform: translateX(-50%); pointer-events: auto; white-space: nowrap; }
+.keys { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 2rem); text-align: center; background: #152b2deb; padding: .4rem .6rem; border-radius: .25rem; margin: 0; }
+.touch { display: none; }
+#auction { width: min(73rem, 92%); height: min(47rem, 86%); padding: 0; overflow: hidden; color: #faf3e4; background: #211a14; border: 2px solid #b0884d; border-radius: .6rem; box-shadow: 0 1rem 4rem #080604b0; }
+#auction[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+#auction::backdrop { background: #100c0861; }
+.auction-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .4rem .7rem .4rem .9rem; background: #402a1c; border-bottom: 1px solid #b0884d; }
+.auction-header h2 { margin: 0; color: #ffda9d; font: 700 clamp(1rem, 3vw, 1.35rem) Georgia, serif; }
+.auction-header button { min-width: 2rem; padding: .15rem .4rem; background: #672c24; color: #fff1d5; font-size: 1.15rem; }
+#auction-listings { display: block; width: 100%; height: 100%; border: 0; }
+[hidden] { display: none !important; }
+@media (any-pointer: coarse) {
+  .keys { display: none; }
+  #interact { bottom: 7.25rem; }
+  .touch { position: absolute; bottom: .75rem; left: 1rem; display: grid; grid-template-columns: repeat(3, 2.75rem); gap: .2rem; pointer-events: auto; touch-action: none; }
+  .touch button:first-child { grid-column: 2; }
+  .touch button:nth-child(2) { grid-column: 1; }
+}
