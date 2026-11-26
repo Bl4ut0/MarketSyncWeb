@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { DEFAULT_ITEM_ICON, getCachedWowheadTooltipMeta, getItemIconUrl, getWowheadItemUrl, type FlavorId } from '@marketsync/shared';
 import type { HistoryHours } from '../lib/priceHistory.js';
-import type { ItemAnalyticsDetails } from '../lib/marketAnalytics.js';
+import { describeVolatility, VOLUME_MOVERS_RANKING, type ItemAnalyticsDetails } from '../lib/marketAnalytics.js';
 import { snapshotClient } from '../lib/snapshotClient.js';
 import type {
   EnrichedAuctionRow,
@@ -443,12 +443,14 @@ export function MarketAnalyticsPanel({
       items: MarketAnalyticsItem[],
       mode: Leaderboard,
       emptyMsg: string,
+      note?: string,
     ) => {
       if (items.length === 0) {
         return <div className="ms-m-pager">{emptyMsg}</div>;
       }
       return (
         <div>
+          {note && <div className="ms-m-pager ms-an-ranking-note">{note}</div>}
           {items.map((it) => {
             const row = displayRow(it.row);
             const color = QUALITY_COLORS[row.quality] ?? '#ffffff';
@@ -457,10 +459,10 @@ export function MarketAnalyticsPanel({
 
             let badge = '';
             let badgeColor = '#cbd5e1';
-            let metaLine = '';
+            let metaLine: ReactNode = '';
 
             if (mode === 'deals') {
-              badge = `${it.dealPctOfAvg}% MV`;
+              badge = `${it.dealPctOfMedian}% of median`;
               badgeColor = '#6ee7b7';
               metaLine = `${formatSignedPct(it.priceChangePct, it.observations)} vs ${windowLabel} · x${row.totalQty.toLocaleString()}`;
             } else if (mode === 'gainers') {
@@ -470,7 +472,13 @@ export function MarketAnalyticsPanel({
             } else if (mode === 'stable') {
               badge = `${it.stabilityScore}% Stable`;
               badgeColor = '#f3d078';
-              metaLine = `±${(it.volatilityCv * 100).toFixed(1)}% spread · x${row.totalQty.toLocaleString()}`;
+              const volatility = describeVolatility(it.volatilityPct);
+              metaLine = (
+                <>
+                  Volatility <span style={{ color: volatility.color }}>{volatility.text}</span>
+                  {` · x${row.totalQty.toLocaleString()}`}
+                </>
+              );
             } else {
               badge = `x${row.totalQty.toLocaleString()}`;
               badgeColor = '#93c5fd';
@@ -556,7 +564,7 @@ export function MarketAnalyticsPanel({
             {(
               [
                 ['map', 'Block Map'],
-                ['deals', 'Deals (% MV)'],
+                ['deals', 'Deals (% of median)'],
                 ['gainers', 'Price Surges'],
                 ['stable', 'Stable Staples'],
                 ['volume', 'Big Volume'],
@@ -651,7 +659,7 @@ export function MarketAnalyticsPanel({
             analytics.deals,
             'deals',
             macro.sampledCaptures < 2
-              ? 'Need at least 2 historical captures in this window to compute % MV deals.'
+              ? 'Need at least 2 historical captures in this window to compare prices with the median.'
               : 'No items currently trading significantly below their window median.',
           )
         ) : mobileSection === 'gainers' ? (
@@ -673,6 +681,7 @@ export function MarketAnalyticsPanel({
             analytics.volumeMovers,
             'volume',
             'No high-volume commodities matched this filter.',
+            VOLUME_MOVERS_RANKING,
           )
         )}
 
@@ -856,7 +865,7 @@ export function MarketAnalyticsPanel({
                       <td className="ms-an-signal">
                         {mode === 'deals' && (
                           <span className="ms-an-value is-deal">
-                            {it.dealPctOfAvg}%
+                            {it.dealPctOfMedian}%
                           </span>
                         )}
                         {mode === 'gainers' && (
@@ -864,11 +873,19 @@ export function MarketAnalyticsPanel({
                             {formatSignedPct(it.priceChangePct, it.observations)}
                           </span>
                         )}
-                        {mode === 'stable' && (
-                          <span className="ms-an-value is-stable">
-                            {it.stabilityScore}%
-                          </span>
-                        )}
+                        {mode === 'stable' && (() => {
+                          const volatility = describeVolatility(it.volatilityPct);
+                          return (
+                            <>
+                              <span className="ms-an-value is-stable">
+                                {it.stabilityScore}%
+                              </span>
+                              <span className="ms-an-muted" title="Price volatility: (max − min) ÷ mean of observed prices">
+                                Volatility <span style={{ color: volatility.color }}>{volatility.text}</span>
+                              </span>
+                            </>
+                          );
+                        })()}
                         {mode === 'volume' && (
                           <span className="ms-an-value is-vol">
                             {it.observations >= 2
@@ -900,7 +917,7 @@ export function MarketAnalyticsPanel({
           {(
             [
               ['overview', 'Overview & Block Map'],
-              ['movers', 'Major Movers & % MV Deals'],
+              ['movers', 'Major Movers & Below-Median Deals'],
               ['stable', 'Structurally Stable'],
               ['volume', 'Large Quantity & Money Flow'],
             ] as const
@@ -1100,7 +1117,7 @@ export function MarketAnalyticsPanel({
                       <i style={{ background: '#334155' }} /> Stable
                     </span>
                     <span>
-                      <i style={{ background: '#7f1d1d' }} /> Below Avg (Deal)
+                      <i style={{ background: '#7f1d1d' }} /> Below Median (Deal)
                     </span>
                   </div>
                 </div>
@@ -1109,8 +1126,8 @@ export function MarketAnalyticsPanel({
 
               <div className="ms-an-two-col">
                 {renderDesktopTable(
-                  'Below-Average Deals (% Market Value)',
-                  `Liquid items currently priced below their ${windowLabel} median (TSM-style buy opportunities).`,
+                  'Below-Median Deals (% of median price)',
+                  `Liquid items whose lowest price is below their ${windowLabel} median price, shown as a percentage of that median.`,
                   analytics.deals,
                   'deals',
                   7,
@@ -1127,14 +1144,14 @@ export function MarketAnalyticsPanel({
               <div className="ms-an-two-col">
                 {renderDesktopTable(
                   'Structurally Stable Staples',
-                  'Consistently stocked items with minimal price volatility — reliable farming & crafting anchors.',
+                  'Consistently stocked items with steady prices (low spread (CV)) — reliable farming & crafting anchors.',
                   analytics.stableAnchors,
                   'stable',
                   7,
                 )}
                 {renderDesktopTable(
                   'High-Volume Money Movers',
-                  'Highest-liquidity commodities and stack traffic on the Auction House.',
+                  VOLUME_MOVERS_RANKING,
                   analytics.volumeMovers,
                   'volume',
                   7,
@@ -1156,14 +1173,14 @@ export function MarketAnalyticsPanel({
           ) : section === 'stable' ? (
             renderDesktopTable(
               'Structurally Stable Anchors',
-              `High-presence items ranked by lowest ${windowLabel} price volatility and consistent supply.`,
+              `High-presence items ranked by stability score: steady ${windowLabel} prices (low spread (CV)) and consistent presence. Volatility is shown the addon's way: (max − min) ÷ mean.`,
               analytics.stableAnchors,
               'stable',
             )
           ) : (
             renderDesktopTable(
               'Large Quantity & Gold Volume Movers',
-              `Top commodities by active unit supply, supply shifts, and listed gold value.`,
+              VOLUME_MOVERS_RANKING,
               analytics.volumeMovers,
               'volume',
             )

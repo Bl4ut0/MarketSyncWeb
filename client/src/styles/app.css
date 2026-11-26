@@ -135,6 +135,44 @@ code {
   gap: .4rem;
 }
 
+.ms-header-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ms-btn-curseforge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: linear-gradient(180deg, rgba(241, 100, 54, 0.22) 0%, rgba(180, 58, 22, 0.28) 100%);
+  color: #ffb899;
+  border-color: rgba(241, 100, 54, 0.65);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.ms-btn-curseforge:hover {
+  background: linear-gradient(180deg, rgba(241, 100, 54, 0.36) 0%, rgba(205, 70, 28, 0.42) 100%);
+  border-color: #ff7a4d;
+  color: #ffffff;
+}
+
+.ms-footer-link {
+  color: #ff9d76;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ms-footer-link:hover {
+  color: #ffc2a8;
+  text-decoration: underline;
+}
+
 .ms-enter-azeroth {
   min-height: 44px;
   white-space: nowrap;
@@ -411,6 +449,36 @@ code {
   background: var(--badge-bg);
   color: var(--text-accent);
   border-color: var(--accent-primary);
+}
+
+.ms-faction-switch {
+  display: inline-flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--frame-radius);
+  overflow: hidden;
+}
+
+.ms-faction-btn {
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 0;
+  padding: 0.38rem 0.8rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ms-faction-btn + .ms-faction-btn { border-left: 1px solid var(--border-subtle); }
+.ms-faction-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+.ms-faction-btn.is-alliance.is-active { background: rgba(28, 72, 140, 0.35); color: #8cc2ff; }
+.ms-faction-btn.is-horde.is-active { background: rgba(140, 28, 28, 0.35); color: #ff8a8a; }
+
+.ms-field-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .ms-stats-strip {
@@ -1274,8 +1342,16 @@ code {
 .ms-craft-profit {
   display: flex;
   flex-direction: column;
-  gap: .85rem;
+  gap: 0.9rem;
   min-width: 0;
+}
+
+.ms-craft-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .ms-craft-heading h2,
@@ -1287,10 +1363,75 @@ code {
 .ms-craft-results-label { color: var(--text-secondary); font-size: .82rem; }
 .ms-craft-heading p { margin-top: .25rem; }
 
+.ms-craft-build-badge {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-panel-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  white-space: nowrap;
+}
+
+/* WoW Forever Profession Skill Strip */
+.ms-prof-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding-bottom: 0.25rem;
+}
+
+.ms-prof-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.68rem;
+  border-radius: var(--frame-radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-panel-elevated);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.ms-prof-pill:hover {
+  border-color: var(--border-primary);
+  background: var(--bg-row-hover);
+}
+
+.ms-prof-pill.is-active {
+  border-color: var(--text-accent);
+  background: rgba(212, 175, 55, 0.16);
+  color: var(--text-accent);
+}
+
+.ms-prof-pill-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.ms-prof-pill small {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.ms-craft-unpriced-note {
+  margin: 0;
+  padding: .45rem .7rem;
+  border-left: 3px solid var(--text-muted);
+  color: var(--text-secondary);
+  font-size: .82rem;
+}
+
 .ms-craft-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  grid-template-columns: minmax(190px, 1.4fr) repeat(3, minmax(150px, 1fr)) auto;
   gap: .65rem;
+  align-items: end;
 }
 .ms-craft-controls label {
   display: grid;
@@ -1299,35 +1440,485 @@ code {
   font-size: .82rem;
 }
 .ms-craft-controls :is(select, input) { width: 100%; min-width: 0; }
-.ms-craft-list { border: 1px solid var(--border-subtle); border-radius: var(--frame-radius); }
-.ms-craft-recipe + .ms-craft-recipe { border-top: 1px solid var(--border-subtle); }
-.ms-craft-recipe:nth-child(even) { background: var(--bg-row-stripe); }
+.ms-craft-filter-toggle { display: flex; }
 
-.ms-craft-recipe-button {
+/* WoW Forever 2-Column Professions Workspace */
+.ms-forever-prof-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
-  align-items: baseline;
-  gap: .65rem;
+  grid-template-columns: minmax(300px, 370px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.ms-forever-recipe-pane {
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 10, 14, 0.72);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--frame-radius);
+  overflow: hidden;
+}
+
+.ms-forever-pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-panel-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-accent);
+}
+
+.ms-forever-pane-header small {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.ms-forever-recipe-scroll {
+  display: flex;
+  flex-direction: column;
+  max-height: 680px;
+  overflow-y: auto;
+}
+
+.ms-forever-recipe-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
   width: 100%;
-  padding: .8rem;
+  padding: 0.52rem 0.7rem;
   border: 0;
-  background: none;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
   color: inherit;
   font: inherit;
-  text-align: start;
+  text-align: left;
   cursor: pointer;
-  overflow-wrap: anywhere;
+  transition: background 100ms ease;
+}
+
+.ms-forever-recipe-row:nth-child(even) {
+  background: var(--bg-row-stripe);
+}
+
+.ms-forever-recipe-row:hover {
+  background: var(--bg-row-hover);
+}
+
+.ms-forever-recipe-row.is-selected {
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.24) 0%, rgba(212, 175, 55, 0.06) 100%);
+  box-shadow: inset 3px 0 0 var(--text-accent);
+}
+
+.ms-forever-recipe-icon-wrap {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-subtle);
+  overflow: hidden;
+  background: #07090d;
+  flex-shrink: 0;
+}
+
+.ms-forever-recipe-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ms-forever-stack-count {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  padding: 0 3px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.82);
+  border-top-left-radius: 3px;
+}
+
+.ms-forever-recipe-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ms-forever-recipe-title strong {
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-forever-recipe-title small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-forever-recipe-profit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
-.ms-craft-recipe-button:hover,
-.ms-craft-recipe-button[aria-expanded="true"] { background: var(--bg-row-hover); }
-.ms-craft-recipe-button small,
-.ms-craft-material small { display: block; color: var(--text-secondary); }
-.ms-craft-recipe-button .ms-copper,
-.ms-craft-material .ms-copper { white-space: normal; flex-wrap: wrap; }
-.ms-craft-recipe-button .is-profit { color: #79dfa6; }
-.ms-craft-recipe-button .is-loss { color: #ff9b9b; }
-.ms-craft-breakdown { padding: .8rem; background: var(--bg-input); }
+
+.ms-forever-recipe-profit.is-profit { color: #79dfa6; }
+.ms-forever-recipe-profit.is-loss { color: #ff9b9b; }
+.ms-forever-recipe-profit.is-muted { color: var(--text-muted); }
+.ms-forever-recipe-profit small {
+  font-size: 0.69rem;
+  color: var(--text-secondary);
+}
+
+/* RIGHT PANE: Schematic Form */
+.ms-forever-schematic {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  padding: 1rem;
+  background: radial-gradient(circle at top left, rgba(212, 175, 55, 0.08), transparent 52%), rgba(10, 12, 17, 0.82);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--frame-radius);
+  min-width: 0;
+}
+
+.ms-forever-schematic-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ms-forever-item-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.ms-forever-hero-icon-box {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  border: 2px solid var(--border-primary);
+  overflow: hidden;
+  background: #06080b;
+  flex-shrink: 0;
+}
+
+.ms-forever-hero-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ms-forever-hero-qty {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  padding: 1px 5px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.86);
+  border-radius: 4px;
+}
+
+.ms-forever-hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ms-forever-prof-kicker {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.ms-forever-hero-name {
+  margin: 0;
+  font-size: 1.22rem;
+  line-height: 1.2;
+}
+
+.ms-forever-hero-links {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+  font-size: 0.79rem;
+}
+
+.ms-forever-hero-links a {
+  color: var(--text-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ms-forever-hero-links a:hover {
+  text-decoration: underline;
+}
+
+.ms-forever-supply-pill {
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.ms-forever-qty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.ms-forever-qty-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.ms-forever-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ms-forever-qty-input {
+  width: 68px !important;
+  text-align: center;
+  padding: 0.3rem 0.4rem;
+}
+
+.ms-forever-qty-box small {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+.ms-forever-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.ms-forever-shuffle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #40cf78;
+  background: rgba(64, 207, 120, 0.14);
+  border: 1px solid rgba(64, 207, 120, 0.4);
+}
+
+.ms-forever-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-panel-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--frame-radius);
+}
+
+.ms-forever-kpi small {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.ms-forever-kpi strong {
+  font-size: 0.94rem;
+}
+
+.ms-forever-kpi.is-profit {
+  border-color: rgba(85, 214, 140, 0.42);
+  background: rgba(32, 92, 58, 0.18);
+}
+.ms-forever-kpi.is-profit strong { color: #79dfa6; }
+
+.ms-forever-kpi.is-loss {
+  border-color: rgba(255, 110, 110, 0.38);
+  background: rgba(98, 28, 28, 0.18);
+}
+.ms-forever-kpi.is-loss strong { color: #ff9b9b; }
+
+.ms-forever-savings-tag,
+.ms-forever-roi-tag {
+  font-size: 0.72rem;
+  color: #79dfa6;
+}
+.ms-forever-kpi.is-loss .ms-forever-roi-tag { color: #ff9b9b; }
+
+/* Schematic Body: Item Tooltip + Reagent Slots */
+.ms-forever-schematic-body {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.95fr) minmax(280px, 1.25fr);
+  gap: 0.95rem;
+  align-items: start;
+}
+
+.ms-forever-item-card-section h4,
+.ms-forever-reagents-section h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-accent);
+}
+
+.ms-forever-tooltip-card {
+  padding: 0.75rem 0.85rem;
+  background: #080b12;
+  border: 1px solid rgba(200, 165, 85, 0.45);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.45);
+  font-size: 0.83rem;
+  line-height: 1.42;
+}
+
+.ms-forever-tooltip-card p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.ms-forever-reagent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.55rem;
+}
+
+.ms-forever-reagent-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  background: rgba(6, 8, 12, 0.82);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  min-width: 0;
+}
+
+.ms-forever-reagent-icon-box {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-subtle);
+  overflow: hidden;
+  background: #05070a;
+  flex-shrink: 0;
+}
+
+.ms-forever-reagent-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ms-forever-reagent-qty {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  padding: 0 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.85);
+  border-top-left-radius: 4px;
+}
+
+.ms-forever-reagent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.ms-forever-reagent-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-forever-reagent-name:hover {
+  text-decoration: underline;
+}
+
+.ms-forever-reagent-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+}
+
+.ms-forever-src-badge {
+  padding: 0.06rem 0.38rem;
+  border-radius: 4px;
+  font-size: 0.69rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-secondary);
+}
+.ms-forever-src-badge.is-craft {
+  background: rgba(90, 175, 255, 0.16);
+  color: #84c5ff;
+}
+.ms-forever-src-badge.is-vendor {
+  background: rgba(212, 175, 55, 0.16);
+  color: #f0cf70;
+}
+.ms-forever-src-badge.is-missing {
+  background: rgba(255, 100, 100, 0.14);
+  color: #ff9b9b;
+}
+
+.ms-craft-jump-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #7cc0ff;
+  font-size: 0.73rem;
+  cursor: pointer;
+}
+.ms-craft-jump-link:hover {
+  text-decoration: underline;
+}
+
+.ms-craft-breakdown {
+  padding: .8rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--frame-radius);
+}
 
 .ms-craft-breakdown-heading {
   display: flex;
@@ -1339,28 +1930,61 @@ code {
   font-size: .8rem;
 }
 .ms-craft-breakdown-heading h3 { margin: 0; font-size: .9rem; color: var(--text-accent); }
-.ms-craft-breakdown a { color: var(--text-accent); }
+.ms-craft-breakdown a { color: var(--text-accent); text-decoration: none; }
+.ms-craft-breakdown a:hover { text-decoration: underline; }
 .ms-craft-tree { list-style: none; padding: 0; margin: .45rem 0 0; }
 .ms-craft-tree .ms-craft-tree {
-  margin: 0 0 .35rem .4rem;
-  padding-inline-start: .55rem;
+  margin: 0 0 .35rem .8rem;
+  padding-inline-start: .65rem;
   border-inline-start: 1px solid var(--border-primary);
 }
 .ms-craft-material {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: .5rem;
   padding: .4rem .15rem;
   font-size: .83rem;
 }
+.ms-craft-mat-left {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.ms-craft-mini-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.ms-craft-material small { display: block; color: var(--text-secondary); }
+.ms-craft-material .ms-copper { white-space: normal; flex-wrap: wrap; }
 .ms-craft-material > div { overflow-wrap: anywhere; }
-.ms-craft-more { align-self: center; }
+.ms-craft-more { margin: 0.55rem; align-self: center; }
+
+@media (max-width: 980px) {
+  .ms-craft-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ms-forever-prof-workspace {
+    grid-template-columns: 1fr;
+  }
+  .ms-forever-recipe-scroll {
+    max-height: 300px;
+  }
+  .ms-forever-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ms-forever-schematic-body {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 620px) {
   .ms-craft-profit { margin: .65rem; padding: .75rem; }
-  .ms-craft-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ms-craft-recipe-button { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .ms-craft-recipe-name { grid-column: 1 / -1; }
+  .ms-craft-controls { grid-template-columns: 1fr; }
 }
 
 /* Shopping Lists & Alerts layouts */

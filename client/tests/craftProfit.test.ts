@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createCraftEvaluator, type CraftRecipe, type RecipeCatalog } from '../src/lib/craftProfit.js';
+import {
+  createCraftEvaluator, describeUnpricedRecipes, visibleProfessions, type CraftRecipe, type RecipeCatalog,
+} from '../src/lib/craftProfit.js';
 
 const recipe = (id: number, itemId: number, count: number, reagents: [number, number][]): CraftRecipe => ({
   id, itemId, yield: count, reagents, profession: 164, name: `Recipe ${id}`,
@@ -39,5 +41,43 @@ describe('craft profitability', () => {
       40: { price: 5, quantity: 3 },
     });
     expect(estimate(final, 1, 'lowest')).toMatchObject({ cost: null, netSale: null, profit: null });
+  });
+
+  it('calculates vendor profit for bulk crafts without an auction sale quote or fee', () => {
+    const product = recipe(1, 10, 2, [[20, 3]]);
+    const data = { ...catalog([product]), sellPrices: { 10: 200 } };
+    const available = createCraftEvaluator(data, { 20: { price: 20, quantity: 150 } });
+    expect(available(product, 50, 'lowest')).toMatchObject({
+      output: 100, cost: 3000, netSale: null, profit: null,
+      vendorSale: 20000, vendorProfit: 17000,
+    });
+    const missing = createCraftEvaluator(data, {});
+    expect(missing(product, 1, 'lowest')).toMatchObject({
+      cost: null, vendorSale: 400, vendorProfit: null,
+    });
+  });
+});
+
+describe('unpriced recipes', () => {
+  const professions = [
+    { id: 171, name: 'Alchemy', recipeCount: 181, unsupportedCount: 15 },
+    { id: 333, name: 'Enchanting', recipeCount: 29, unsupportedCount: 233 },
+    { id: 129, name: 'First Aid', recipeCount: 32, unsupportedCount: 0 },
+    { id: 755, name: 'Jewelcrafting', recipeCount: 0, unsupportedCount: 4 },
+    { id: 794, name: 'Archaeology', recipeCount: 0, unsupportedCount: 0 },
+  ];
+
+  it('keeps professions whose recipes are all unpriced and drops empty ones', () => {
+    expect(visibleProfessions({ professions }).map((p) => p.name))
+      .toEqual(['Alchemy', 'Enchanting', 'First Aid', 'Jewelcrafting']);
+  });
+
+  it('explains why recipes are not priced', () => {
+    expect(describeUnpricedRecipes(professions[2]!)).toBeNull();
+    expect(describeUnpricedRecipes(professions[1]!)).toBe(
+      '233 Enchanting recipes are not priced: most enchants apply to gear and create no item to sell.',
+    );
+    expect(describeUnpricedRecipes(professions[0]!)).toMatch(/^15 Alchemy recipes are not priced: they create no item/);
+    expect(describeUnpricedRecipes({ ...professions[3]!, unsupportedCount: 1 })).toMatch(/^1 Jewelcrafting recipe is not priced/);
   });
 });

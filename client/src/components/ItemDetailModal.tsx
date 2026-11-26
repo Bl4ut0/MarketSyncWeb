@@ -13,7 +13,7 @@ import { ItemBadge } from './ItemBadge.js';
 import { ItemHistory } from './ItemHistory.js';
 import { ItemTooltip, useItemTooltip } from './ItemTooltip.js';
 import { HISTORY_RANGE_LABELS, type HistoryHours } from '../lib/priceHistory.js';
-import type { ItemAnalyticsDetails } from '../lib/marketAnalytics.js';
+import { describeVolatility, type ItemAnalyticsDetails } from '../lib/marketAnalytics.js';
 
 const formatChange = new Intl.NumberFormat(undefined, {
   style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero',
@@ -129,6 +129,7 @@ export function ItemDetailModal({
     listings: item.listings,
   };
   const tooltipIcon = item.icon === DEFAULT_ITEM_ICON ? tooltip.icon : undefined;
+  const volatility = describeVolatility(comparison?.volatilityPct);
 
   const body = (
     <div className="ms-detail-body" ref={bodyRef}>
@@ -223,12 +224,16 @@ export function ItemDetailModal({
               <dd><CopperDisplay copper={comparison.windowMedianPrice} /></dd>
             </div>
             {comparison.source === 'deals' && (
-              <div><dt>% of window median</dt><dd>{comparison.dealPctOfAvg}%</dd></div>
+              <div><dt>% of window median</dt><dd>{comparison.dealPctOfMedian}%</dd></div>
             )}
             {comparison.source === 'stable' && (
               <>
                 <div><dt>Stability score</dt><dd>{comparison.stabilityScore}%</dd></div>
-                <div><dt>Price volatility</dt><dd>{(comparison.volatilityCv * 100).toFixed(1)}%</dd></div>
+                <div>
+                  <dt>Price volatility</dt>
+                  <dd style={{ color: volatility.color }}>{volatility.text}</dd>
+                </div>
+                <div><dt>Price spread (CV)</dt><dd>{(comparison.volatilityCv * 100).toFixed(1)}%</dd></div>
                 <div><dt>Average unit price</dt><dd><CopperDisplay copper={comparison.windowAvgPrice} /></dd></div>
               </>
             )}
@@ -249,9 +254,9 @@ export function ItemDetailModal({
             ? `${comparison.source === 'block' ? 'The block map percentage' : 'Price change'} compares the latest lowest unit price with the median of earlier observations.`
             : 'An earlier observation is needed to calculate a change.'}</p>
           {comparison.source === 'deals' && (
-            <p><strong>{comparison.dealPctOfAvg}% MV</strong> means the current price is {comparison.dealPctOfAvg}% of the median across all samples in the window.</p>
+            <p><strong>{comparison.dealPctOfMedian}% of median</strong> means the current lowest price is {comparison.dealPctOfMedian}% of the median price across all samples in the window.</p>
           )}
-          {comparison.source === 'stable' && <p>The stability score combines price volatility with how often the item appeared in the captures.</p>}
+          {comparison.source === 'stable' && <p>Price volatility is (highest − lowest) ÷ average of the observed prices, as in the addon. The stability score combines the price spread (CV, standard deviation ÷ average) with how often the item appeared in the captures.</p>}
           {comparison.source === 'volume' && <p>Listed value uses the lowest unit price and current quantity. Supply change compares quantity with the earlier median.</p>}
         </section>
       )}

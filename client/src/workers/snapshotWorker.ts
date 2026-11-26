@@ -819,12 +819,23 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
       } else if (msg.type === 'QUERY_ENTRIES') {
         workerScope.postMessage(await handleQueryEntries(msg));
       } else if (msg.type === 'GET_CRAFT_QUOTES') {
-        const { snapshot } = await loadAndCacheSnapshot(msg.path, msg.flavor);
+        const [{ snapshot }, catalogItems] = await Promise.all([
+          loadAndCacheSnapshot(msg.path, msg.flavor),
+          getItemCatalog(msg.flavor),
+          ensureTooltipsPreloaded(),
+        ]);
         const market = snapshot.partitions[msg.partitionKey]?.factions[msg.faction] ?? {};
         const quotes: CraftQuotes = {};
         for (const { itemId, minPrice, totalQty, isPetCage } of Object.values(market)) {
           if (isPetCage || minPrice <= 0 || totalQty <= 0) continue;
-          const quote = quotes[itemId] ??= { price: minPrice, quantity: 0 };
+          const catItem = catalogItems[String(itemId)];
+          const cachedMeta = getCachedWowheadTooltipMeta(itemId, msg.flavor);
+          const quote = quotes[itemId] ??= {
+            price: minPrice,
+            quantity: 0,
+            icon: cachedMeta?.icon,
+            quality: catItem?.quality ?? cachedMeta?.quality,
+          };
           quote.price = Math.min(quote.price, minPrice);
           quote.quantity += totalQty;
         }

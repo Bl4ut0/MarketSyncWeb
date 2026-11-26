@@ -46,6 +46,20 @@ export function packAnalyticsReport(
   return { version: 2, timestamp, categories, items, views };
 }
 
+/**
+ * Reports built by an older analytics engine name the deal percentage
+ * `dealPctOfAvg` and have no `volatilityPct`. Fill the new fields in place so
+ * published reports keep working until they are rebuilt.
+ */
+function upgradeLegacyItem(item: MarketAnalyticsItem): MarketAnalyticsItem {
+  const legacy = item as MarketAnalyticsItem & { dealPctOfAvg?: number };
+  if (typeof legacy.dealPctOfMedian !== 'number' && typeof legacy.dealPctOfAvg === 'number') {
+    legacy.dealPctOfMedian = legacy.dealPctOfAvg;
+  }
+  if (legacy.volatilityPct === undefined) legacy.volatilityPct = null;
+  return legacy;
+}
+
 export function unpackAnalyticsView(report: PreparedAnalyticsReport, category: string): MarketAnalyticsPayload {
   if (report.version !== 2 || !Array.isArray(report.items) || !Array.isArray(report.categories)) {
     throw new Error('Invalid market analytics report');
@@ -65,7 +79,7 @@ export function unpackAnalyticsView(report: PreparedAnalyticsReport, category: s
     selected[name].map((id) => {
       const item = report.items[id];
       if (!item?.row) throw new Error('Invalid market analytics item reference');
-      return item;
+      return upgradeLegacyItem(item);
     }),
   ])) as Record<ListName, MarketAnalyticsItem[]>;
   return {

@@ -66,6 +66,11 @@ import {
   type SortField,
 } from './lib/snapshotClient.js';
 import { selectHistoryBlocks, type HistoryHours } from './lib/priceHistory.js';
+import { blockPathForRoute, buildDeepLink, parseDeepLink } from './lib/deepLink.js';
+import {
+  HOME_FACTIONS, hasFactionMarkets, initialHomeFaction, marketChoices, partitionSelectorLabel, resolveMarket,
+  saveHomeFaction, type HomeFaction,
+} from './lib/marketSelection.js';
 import type { ItemAnalyticsDetails } from './lib/marketAnalytics.js';
 import { getCachedAnalytics, loadPreparedAnalytics } from './lib/preparedAnalytics.js';
 import { ERA_THEMES } from './themes/themes.js';
@@ -80,6 +85,7 @@ const checkedDate = new Intl.DateTimeFormat(undefined, {
 });
 const harborAuction = document.body.hasAttribute('data-harbor-auction');
 const exploreOrigin = 'https://explore.bl4ut0.dev';
+const CURSEFORGE_ADDON_URL = 'https://www.curseforge.com/wow/addons/marketsync';
 const mobileLayoutQuery = '(hover: none) and (pointer: coarse)';
 const mobileSortOptions = {
   price_asc: ['minPrice', 'asc'],
@@ -88,13 +94,20 @@ const mobileSortOptions = {
   name_asc: ['name', 'asc'],
 } satisfies Record<Parameters<MobileAppProps['onSortChange']>[0], [SortField, SortDir]>;
 
+// Read once at load: a deep link such as /item/forever/pvp/alliance/13464/2026-11-25/17
+// sets the flavor, ruleset, faction, view, snapshot hour and item before data arrives.
+const initialRoute = typeof window === 'undefined' ? null : parseDeepLink(window.location.pathname);
+
 export function App() {
-  const [activeTab, setActiveTab] = useState<MainViewTab>('ah');
+  const [activeTab, setActiveTab] = useState<MainViewTab>(
+    () => (initialRoute?.action === 'analytics' ? 'analytics' : 'ah'),
+  );
   const [mapOpened, setMapOpened] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(() => window.matchMedia(mobileLayoutQuery).matches);
   const [mobileTab, setMobileTab] = useState<MobileAppProps['activeTab']>('market');
   const mobileRealmPicker = useRef<HTMLDialogElement>(null);
   const [flavor, setFlavor] = useState<FlavorId>(() => {
+    if (initialRoute) return initialRoute.flavor;
     const edition = new URLSearchParams(window.location.search).get('flavor');
     return isFlavorId(edition) ? edition : 'forever';
   });
@@ -108,7 +121,7 @@ export function App() {
   // Dataset index & snapshot state
   const [datasetIndex, setDatasetIndex] = useState<DatasetIndex | null>(null);
   const [indexError, setIndexError] = useState<string | null>(null);
-  const [archivePath, setArchivePath] = useState('');
+  const [archivePath, setArchivePath] = useState(() => (initialRoute ? blockPathForRoute(initialRoute) ?? '' : ''));
   const [refreshingIndex, setRefreshingIndex] = useState(false);
   const [indexCheckedAt, setIndexCheckedAt] = useState<number>();
   const indexRequest = useRef(0);
@@ -118,8 +131,14 @@ export function App() {
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
 
   // Market selectors & filters
-  const [partitionKey, setPartitionKey] = useState<string>('pvp');
-  const [faction, setFaction] = useState<FactionPartition>('Alliance');
+  const [partitionKey, setPartitionKey] = useState<string>(() => initialRoute?.ruleset ?? 'pvp');
+  // The player's own faction (remembered) and the market being browsed, which
+  // is that faction's AH or a shared market such as Neutral.
+  const [homeFaction, setHomeFaction] = useState<HomeFaction>(() => initialHomeFaction(initialRoute?.faction));
+  const [faction, setFaction] = useState<FactionPartition>(() => initialRoute?.faction ?? homeFaction);
+  // Item named in a deep link, opened once its rows are ready.
+  const pendingItemKey = useRef<string | undefined>(initialRoute?.itemKey);
+  const [itemRestored, setItemRestored] = useState(!initialRoute?.itemKey);
   const [search, setSearch] = useState<string>('');
   const [exactMatch, setExactMatch] = useState<boolean>(false);
   const [qualityFilter, setQualityFilter] = useState<string>('all');
@@ -403,14 +422,22 @@ export function App() {
     return Array.from(set);
   }, [flavorConfig, selectedPartitions, partitionKey]);
 
-  // Keep faction valid for active flavor/partition
+  const marketChoiceList = useMemo(
+    () => marketChoices(marketOptions, homeFaction),
+    [marketOptions, homeFaction],
+  );
+  const factionMarketsAvailable = hasFactionMarkets(marketOptions);
+  const partitionLabel = partitionSelectorLabel(flavorConfig.partitionType);
+
+  // Keep the market valid for the active faction, flavor and partition
   useEffect(() => {
     if (marketOptions.length === 0) return;
-    if (!marketOptions.includes(faction)) {
-      setFaction(marketOptions[0]!);
+    const next = resolveMarket(marketOptions, homeFaction, faction) ?? marketOptions[0]!;
+    if (next !== faction) {
+      setFaction(next);
       setPage(1);
     }
-  }, [marketOptions, faction]);
+  }, [marketOptions, homeFaction, faction]);
 
   const lookupName = search.trim().replace(/^["“]|["”]$/g, '').trim().toLowerCase();
   const shouldLookupName = lookupName.length >= 2 && lookupName.length <= 100 &&
@@ -900,6 +927,44 @@ export function App() {
     });
   };
 
+  // Deep link: date without an hour picks that day's latest snapshot.
+  const dateRestored = useRef(!initialRoute?.date || Boolean(initialRoute.hour));
+  useEffect(() => {
+    if (dateRestored.current || !initialRoute?.date || flavorBlocks.length === 0) return;
+    dateRestored.current = true;
+    const day = flavorBlocks
+      .filter((block) => block.date === initialRoute.date)
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+    if (day) setArchivePath(day.path);
+  }, [flavorBlocks]);
+
+  // Deep link: open the named item once its rows are loaded for the linked snapshot.
+  useEffect(() => {
+    if (itemRestored || !pendingItemKey.current) return;
+    if (rowsReadyPath !== selectedBlockPath || rows.length === 0) return;
+    const row = rows.find((candidate) => candidate.itemKey === pendingItemKey.current);
+    pendingItemKey.current = undefined;
+    setItemRestored(true);
+    if (row) openItem(row);
+  }, [itemRestored, rows, rowsReadyPath, selectedBlockPath]);
+
+  // Keep the address bar in sync so the current view can be shared as a link.
+  useEffect(() => {
+    if (!itemRestored || !activeBlockMeta) return;
+    const route = {
+      action: (inspected ? 'item' : activeTab === 'analytics' ? 'analytics' : 'ah') as 'ah' | 'analytics' | 'item',
+      flavor,
+      ruleset: partitionKey,
+      faction,
+      itemKey: inspected?.item.itemKey,
+      date: activeBlockMeta.date,
+      hour: activeBlockMeta.hour,
+    };
+    if (route.action === 'item' && !route.itemKey) return;
+    const link = buildDeepLink(route);
+    if (window.location.pathname !== link) window.history.replaceState(null, '', link + window.location.search);
+  }, [itemRestored, activeBlockMeta, activeTab, flavor, partitionKey, faction, inspected]);
+
   const viewVariant = (variant: EnrichedAuctionRow) => {
     if (!inspected) return;
     clearItemHistory();
@@ -1023,6 +1088,61 @@ export function App() {
     setPage(1);
   };
 
+  // The faction switch selects that faction's own AH; Neutral stays one tap away.
+  const chooseHomeFaction = (next: HomeFaction) => {
+    saveHomeFaction(next);
+    setHomeFaction(next);
+    chooseMarket(resolveMarket(marketOptions, next, next) ?? faction);
+  };
+
+  // With no prefix (the auction browser) the faction buttons keep the
+  // market-tab-<Faction> test ids the e2e suite selects markets with.
+  const factionSwitch = (idPrefix: string) => (
+    <div
+      className="ms-faction-switch"
+      role="group"
+      aria-label="Your faction"
+      title={factionMarketsAvailable ? undefined : 'This market is shared by both factions'}
+    >
+      {HOME_FACTIONS.map((f) => (
+        <button
+          key={f}
+          type="button"
+          aria-pressed={homeFaction === f}
+          disabled={!factionMarketsAvailable}
+          data-testid={idPrefix ? `${idPrefix}faction-${f}` : `market-tab-${f}`}
+          className={`ms-faction-btn is-${f.toLowerCase()} ${homeFaction === f ? 'is-active' : ''}`}
+          onClick={() => chooseHomeFaction(f)}
+        >
+          {f}
+        </button>
+      ))}
+    </div>
+  );
+
+  const marketTabs = (idPrefix: string, ariaLabel: string) => (
+    <div className="ms-market-tabs" role="tablist" aria-label={ariaLabel}>
+      {marketChoiceList.map((choice) => {
+        const isActive = choice.market === faction;
+        return (
+          <button
+            key={choice.market}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            data-testid={choice.kind === 'faction'
+              ? `${idPrefix}market-home`
+              : `${idPrefix}market-tab-${choice.market}`}
+            className={`ms-market-tab ${isActive ? 'is-active' : ''}`}
+            onClick={() => chooseMarket(choice.market)}
+          >
+            {choice.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   if (mobileLayout && !harborAuction) {
     const readyRows = rowsReadyPath === selectedBlockPath ? rows : [];
     const mobileSort = Object.entries(mobileSortOptions).find(([, [field, direction]]) =>
@@ -1041,16 +1161,18 @@ export function App() {
             if (isFlavorId(id)) selectFlavor(id);
           }}
           realmLabel={activePartitionLabel}
+          partitionLabel={partitionLabel}
           realms={partitionOptions.map((p) => ({ label: p.label, count: p.entryCount }))}
           onSelectRealm={(label) => {
             const found = partitionOptions.find((p) => p.label === label);
             if (found) choosePartition(found.key);
           }}
-          faction={faction}
-          onCycleFaction={() => {
-            const next = marketOptions[(marketOptions.indexOf(faction) + 1) % marketOptions.length];
-            if (next) chooseMarket(next);
-          }}
+          homeFaction={homeFaction}
+          onSelectHomeFaction={chooseHomeFaction}
+          factionMarketsAvailable={factionMarketsAvailable}
+          market={faction}
+          markets={marketChoiceList}
+          onSelectMarket={chooseMarket}
           searchQuery={search}
           onSearchChange={(value) => { setSearch(value); setPage(1); }}
           sortBy={mobileSort}
@@ -1119,7 +1241,7 @@ export function App() {
           }}>
             {FLAVOR_IDS.map((id) => <option key={id} value={id}>{FLAVORS[id].shortLabel}</option>)}
           </select>
-          <label htmlFor="mobile-market">{themeMeta.partitionLabel}</label>
+          <label htmlFor="mobile-market">{partitionLabel}</label>
           <select id="mobile-market" className="ms-select" value={partitionKey} onChange={(event) => choosePartition(event.target.value)}>
             {partitionOptions.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
           </select>
@@ -1165,11 +1287,26 @@ export function App() {
             </div>
 
             <div className="ms-header-actions">
-              {harborUrl && (
-                <button type="button" className="ms-btn ms-btn-primary ms-enter-azeroth" onClick={toggleExplore}>
-                  {activeTab === 'explore' ? 'Exit Azeroth' : 'Enter Azeroth'}
-                </button>
-              )}
+              <div className="ms-header-cta-row">
+                <a
+                  href={CURSEFORGE_ADDON_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ms-btn ms-btn-curseforge"
+                  data-testid="curseforge-download-btn"
+                  title="Download the MarketSync WoW Addon from CurseForge"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M18.326 9.2045C19.6608 8.4418 21.3999 7.8256 23.5 7.625H16.25L15.1562 5.375H2.5L4.0312 8.1875C5.9062 8.5312 7.2188 9.6875 7.5938 11.4062C5.9062 11.75 4.6562 12.6875 3.9688 14.125H9.1875L10.375 18.625H14.6875L15.8438 14.125H20.0625C19.5312 12.875 18.5938 11.9688 17.25 11.5312C17.4688 10.6562 17.826 9.8608 18.326 9.2045Z" />
+                  </svg>
+                  <span>Download on CurseForge</span>
+                </a>
+                {harborUrl && (
+                  <button type="button" className="ms-btn ms-btn-primary ms-enter-azeroth" onClick={toggleExplore}>
+                    {activeTab === 'explore' ? 'Exit Azeroth' : 'Enter Azeroth'}
+                  </button>
+                )}
+              </div>
               <div className="ms-auth-bar">
               {auth.authenticated && auth.user ? (
                 <>
@@ -1308,7 +1445,11 @@ export function App() {
           <section className="ms-panel ms-auction-panel" aria-label="Auction House Browser">
             <div className="ms-controls-bar">
               <div className="ms-field-group">
-                <label htmlFor="ruleset-select">{themeMeta.partitionLabel}</label>
+                <span className="ms-field-label">Faction</span>
+                {factionSwitch('')}
+              </div>
+              <div className="ms-field-group">
+                <label htmlFor="ruleset-select">{partitionLabel}</label>
                 <select
                   id="ruleset-select"
                   data-testid="ruleset-select"
@@ -1462,29 +1603,7 @@ export function App() {
             </div>
 
             <div className="ms-market-bar">
-              <div
-                className="ms-market-tabs"
-                role="tablist"
-                aria-label="Faction and Market Tabs"
-              >
-                {marketOptions.map((m) => {
-                  const isActive = m === faction;
-
-  return (
-                    <button
-                      key={m}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      data-testid={`market-tab-${m}`}
-                      className={`ms-market-tab ${isActive ? 'is-active' : ''}`}
-                      onClick={() => chooseMarket(m)}
-                    >
-                      {m}
-                    </button>
-                  );
-                })}
-              </div>
+              {marketTabs('', 'Market')}
 
               <div className="ms-stats-strip">
                 {activeBlockMeta && (
@@ -1871,9 +1990,10 @@ export function App() {
             <div className="ms-panel" style={{ padding: '12px 16px' }}>
               <div className="ms-market-bar" style={{ margin: 0 }}>
                 <div className="ms-inline-row" style={{ gap: '12px', flexWrap: 'wrap' }}>
+                  {factionSwitch('analytics-')}
                   <div className="ms-field-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
                     <label htmlFor="analytics-ruleset-select" style={{ margin: 0 }}>
-                      {themeMeta.partitionLabel}
+                      {partitionLabel}
                     </label>
                     <select
                       id="analytics-ruleset-select"
@@ -1891,23 +2011,7 @@ export function App() {
                     </select>
                   </div>
 
-                  <div className="ms-market-tabs" role="tablist" aria-label="Market factions">
-                    {marketOptions.map((m) => {
-                      const isActive = m === faction;
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          role="tab"
-                          aria-selected={isActive}
-                          className={`ms-market-tab ${isActive ? 'is-active' : ''}`}
-                          onClick={() => chooseMarket(m)}
-                        >
-                          {m}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {marketTabs('analytics-', 'Market')}
                 </div>
 
                 {activeBlockMeta && (
@@ -1957,7 +2061,15 @@ export function App() {
       {!harborAuction && <footer className="ms-footer" data-testid="trademark-footer">
         <p>
           <strong>MarketSyncWeb</strong> — Open-source community Auction House
-          browser &amp; shopping list companion (GPL-3.0).
+          browser &amp; shopping list companion (GPL-3.0) ·{' '}
+          <a
+            href={CURSEFORGE_ADDON_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ms-footer-link"
+          >
+            Download MarketSync on CurseForge ↗
+          </a>
         </p>
         <p>
           Not affiliated with, endorsed by, or sponsored by Blizzard

@@ -9,7 +9,16 @@ export interface MarketAnalyticsItem {
   windowMedianPrice: number;
   baselinePrice: number;
   priceChangePct: number;
-  dealPctOfAvg: number;
+  /** Current lowest unit price as a percentage of the window median price. */
+  dealPctOfMedian: number;
+  /**
+   * Price Volatility as the MarketSync addon computes it (`UI_Analytics.lua`):
+   * (max − min) ÷ mean × 100 over the observed prices. Null until there are
+   * at least {@link MIN_VOLATILITY_OBSERVATIONS} observations, matching the
+   * addon's "Need 3+ data points" message.
+   */
+  volatilityPct: number | null;
+  /** Coefficient of variation (stddev ÷ mean). Used for the stability score only. */
   volatilityCv: number;
   stabilityScore: number;
   baselineQty: number;
@@ -95,6 +104,48 @@ function medianOf(nums: number[]): number {
 
 export const MAX_ANALYTICS_CAPTURES = 8;
 
+/** The addon needs 3+ data points before it shows Price Volatility. */
+export const MIN_VOLATILITY_OBSERVATIONS = 3;
+
+/** (max − min) ÷ mean × 100, rounded to one decimal, as in the addon. */
+export function priceVolatilityPct(prices: readonly number[]): number | null {
+  if (prices.length < MIN_VOLATILITY_OBSERVATIONS) return null;
+  let sum = 0;
+  let min = Number.POSITIVE_INFINITY;
+  let max = 0;
+  for (const price of prices) {
+    sum += price;
+    if (price < min) min = price;
+    if (price > max) max = price;
+  }
+  const mean = sum / prices.length;
+  if (!(mean > 0)) return null;
+  return Math.round(((max - min) / mean) * 1000) / 10;
+}
+
+export type VolatilityBand = 'low' | 'medium' | 'high';
+
+/** Addon colour bands: green ≤ 10%, yellow ≤ 25%, red above. */
+export function volatilityBand(pct: number): VolatilityBand {
+  if (pct > 25) return 'high';
+  if (pct > 10) return 'medium';
+  return 'low';
+}
+
+export const VOLATILITY_BAND_COLORS: Record<VolatilityBand, string> = {
+  low: '#00ff00',
+  medium: '#ffd700',
+  high: '#ff4444',
+};
+
+/** Display text and colour for a volatility value, matching the addon's metrics card. */
+export function describeVolatility(pct: number | null | undefined): { text: string; color: string } {
+  if (pct === null || pct === undefined || !Number.isFinite(pct)) {
+    return { text: `Need ${MIN_VOLATILITY_OBSERVATIONS}+ data points`, color: '#888888' };
+  }
+  return { text: `${pct.toFixed(1)}%`, color: VOLATILITY_BAND_COLORS[volatilityBand(pct)] };
+}
+
 export function analyzeMarket(
   groupedRows: EnrichedAuctionRow[],
   samples: Iterable<MarketObservations>,
@@ -163,7 +214,8 @@ export function analyzeMarket(
         ? ((row.minPrice - baselinePrice) / baselinePrice) * 100
         : 0;
     const priceChangePct = Math.round(rawPct * 10) / 10;
-    const dealPctOfAvg = Math.round((row.minPrice / windowMedianPrice) * 100);
+    const dealPctOfMedian = Math.round((row.minPrice / windowMedianPrice) * 100);
+    const volatilityPct = priceVolatilityPct(prices);
 
     let variance = 0;
     if (observations > 1 && windowAvgPrice > 0) {
@@ -177,6 +229,14 @@ export function analyzeMarket(
       windowAvgPrice > 0 ? Math.sqrt(variance) / windowAvgPrice : 0;
     const presenceRatio =
       sampledCaptures > 0 ? observations / sampledCaptures : 1;
+    // Stability score (0–100), a web-only heuristic:
+    // - 75 points come from price steadiness: 1 − min(1, cv × 2.2). The 2.2
+    //   factor makes a CV of about 0.45 (stddev ≈ 45% of the mean) count as
+    //   fully unstable, so steadiness drops to 0 there and stays at 0 above.
+    // - 25 points come from presence: the share of sampled captures in which
+    //   the item was listed at all.
+    // Price steadiness is weighted 3:1 over presence because a listed price
+    // that swings is the bigger risk for a farming or crafting anchor.
     const stabilityScore = Math.round(
       Math.max(
         0,
@@ -223,7 +283,8 @@ export function analyzeMarket(
       windowMedianPrice,
       baselinePrice,
       priceChangePct,
-      dealPctOfAvg,
+      dealPctOfMedian,
+      volatilityPct,
       volatilityCv: Math.round(volatilityCv * 1000) / 1000,
       stabilityScore,
       baselineQty,
@@ -261,6 +322,14 @@ export function analyzeMarket(
       flavor,
     ),
   };
+}
+
+/** Plain-language description of how volume movers are ranked, for the UI. */
+export const VOLUME_MOVERS_RANKING =
+  'Ranked by listed quantity × log10 of the lowest unit price. This is a sort order from the current listings, not measured sales volume.';
+
+export function volumeMoverScore(item: Pick<MarketAnalyticsItem, 'row'>): number {
+  return item.row.totalQty * Math.log10(Math.max(10, item.row.minPrice));
 }
 
 function summarizeMarket(
@@ -313,10 +382,10 @@ function summarizeMarket(
     .slice(0, 25);
 
   const deals = [...pool]
-    .filter((it) => it.observations >= 2 && it.dealPctOfAvg <= 92 && it.priceChangePct < -2)
+    .filter((it) => it.observations >= 2 && it.dealPctOfMedian <= 92 && it.priceChangePct < -2)
     .sort(
       (a, b) =>
-        a.dealPctOfAvg - b.dealPctOfAvg ||
+        a.dealPctOfMedian - b.dealPctOfMedian ||
         b.marketValueCopper - a.marketValueCopper,
     )
     .slice(0, 25);
@@ -336,11 +405,13 @@ function summarizeMarket(
     )
     .slice(0, 25);
 
+  // Volume movers: a ranking heuristic, not a measured trade volume. Score is
+  // listed quantity × log10(lowest unit price in copper, floored at 10), so a
+  // large stack ranks high and price only nudges it. See VOLUME_MOVERS_RANKING.
   const volumeMovers = [...allItems]
     .sort(
       (a, b) =>
-        b.row.totalQty * Math.log10(Math.max(10, b.row.minPrice)) -
-          a.row.totalQty * Math.log10(Math.max(10, a.row.minPrice)) ||
+        volumeMoverScore(b) - volumeMoverScore(a) ||
         b.marketValueCopper - a.marketValueCopper,
     )
     .slice(0, 25);

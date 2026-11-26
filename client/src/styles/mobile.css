@@ -100,6 +100,17 @@
   color: #f3d078;
 }
 
+.ms-m-dropdown-sep {
+  height: 1px;
+  margin: 4px 2px;
+  background: rgba(200, 155, 60, 0.22);
+}
+
+.ms-m-curseforge-link {
+  color: #ff9d76;
+  text-decoration: none;
+}
+
 .ms-m-title-wrap {
   display: flex;
   flex-direction: column;
@@ -146,6 +157,16 @@
   border-color: rgba(220, 68, 68, 0.55);
   color: #ff8a8a;
   background: rgba(140, 28, 28, 0.25);
+}
+
+.ms-m-pill-btn.is-neutral {
+  border-color: rgba(200, 155, 60, 0.55);
+  color: #f3d078;
+}
+
+.ms-m-pill-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .ms-m-pill-btn.is-alliance {

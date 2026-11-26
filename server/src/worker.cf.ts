@@ -61,7 +61,7 @@ export default {
   },
 
   async scheduled(
-    _controller: unknown,
+    controller: { cron?: string },
     env: WorkerEnv & { GITHUB_DISPATCH_TOKEN?: string },
   ): Promise<void> {
     const token = env.GITHUB_DISPATCH_TOKEN;
@@ -76,11 +76,14 @@ export default {
       'User-Agent': 'MarketSync-Failover-Cron',
     };
 
-    const runsRes = await fetch(
+    // :05 tick handles hourly failover, :35 tick handles daily failover so the two
+    // GitHub workflows never push to master at the same moment.
+    const isDailyTick = controller?.cron === '35 * * * *';
+    const runsRes = isDailyTick ? { ok: false } as Response : await fetch(
       'https://api.github.com/repos/Bl4ut0/MarketSyncData/actions/workflows/hourly-harvest.yml/runs?per_page=1',
       { headers },
     );
-    let shouldDispatchHourly = true;
+    let shouldDispatchHourly = !isDailyTick;
     if (runsRes.ok) {
       const data = (await runsRes.json()) as {
         workflow_runs?: Array<{ created_at?: string }>;
@@ -103,7 +106,7 @@ export default {
     }
 
     // Daily failover check (after 06:20 UTC)
-    if (now.getUTCHours() >= 7) {
+    if (isDailyTick && now.getUTCHours() >= 7) {
       const dailyRes = await fetch(
         'https://api.github.com/repos/Bl4ut0/MarketSyncData/actions/workflows/daily-compile.yml/runs?per_page=1',
         { headers },

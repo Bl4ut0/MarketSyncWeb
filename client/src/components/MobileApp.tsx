@@ -28,16 +28,31 @@ export interface MobileRealmOption {
   count: number;
 }
 
+export interface MobileMarketOption {
+  market: string;
+  label: string;
+  kind: 'faction' | 'shared';
+}
+
 export interface MobileAppProps {
   eraLabel: string;
   activeFlavor: string;
   eras: MobileEraOption[];
   onSelectFlavor: (flavorId: string) => void;
   realmLabel: string;
+  /** Playstyle (Forever), Realm (Classic) or Region (Retail). */
+  partitionLabel: string;
   realms: MobileRealmOption[];
   onSelectRealm: (realm: string) => void;
-  faction: string;
-  onCycleFaction: () => void;
+  /** The player's own faction, remembered between visits. */
+  homeFaction: 'Alliance' | 'Horde';
+  onSelectHomeFaction: (faction: 'Alliance' | 'Horde') => void;
+  /** False when the partition only has shared markets (cross-faction, commodities). */
+  factionMarketsAvailable: boolean;
+  /** The market being browsed: the faction's AH or a shared market such as Neutral. */
+  market: string;
+  markets: MobileMarketOption[];
+  onSelectMarket: (market: string) => void;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   sortBy: string;
@@ -120,10 +135,15 @@ export function MobileApp({
   eras,
   onSelectFlavor,
   realmLabel,
+  partitionLabel,
   realms,
   onSelectRealm,
-  faction,
-  onCycleFaction,
+  homeFaction,
+  onSelectHomeFaction,
+  factionMarketsAvailable,
+  market,
+  markets,
+  onSelectMarket,
   searchQuery,
   onSearchChange,
   sortBy,
@@ -150,12 +170,16 @@ export function MobileApp({
   const [realmPickerOpen, setRealmPickerOpen] = useState(false);
   const [flavorMenuOpen, setFlavorMenuOpen] = useState(false);
 
-  const factionClass =
-    faction.toLowerCase() === 'horde'
-      ? 'is-horde'
-      : faction.toLowerCase() === 'alliance'
-        ? 'is-alliance'
-        : '';
+  const factionClass = factionMarketsAvailable
+    ? homeFaction === 'Horde' ? 'is-horde' : 'is-alliance'
+    : '';
+  const otherFaction = homeFaction === 'Alliance' ? 'Horde' : 'Alliance';
+  const activeMarket = markets.find((m) => m.market === market);
+  const nextMarket = markets.length > 1
+    ? markets[(markets.findIndex((m) => m.market === market) + 1) % markets.length]
+    : undefined;
+  const marketShortLabel = (option: MobileMarketOption | undefined) =>
+    !option ? market : option.kind === 'faction' ? 'Faction AH' : option.label;
 
   return (
     <div className="ms-mobile-shell" data-testid="mobile-app-shell">
@@ -199,6 +223,20 @@ export function MobileApp({
                   </button>
                 );
               })}
+              <div className="ms-m-dropdown-sep" role="separator" />
+              <a
+                href="https://www.curseforge.com/wow/addons/marketsync"
+                target="_blank"
+                rel="noopener noreferrer"
+                role="menuitem"
+                className="ms-m-flavor-option ms-m-curseforge-link"
+                onClick={() => setFlavorMenuOpen(false)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M18.326 9.2045C19.6608 8.4418 21.3999 7.8256 23.5 7.625H16.25L15.1562 5.375H2.5L4.0312 8.1875C5.9062 8.5312 7.2188 9.6875 7.5938 11.4062C5.9062 11.75 4.6562 12.6875 3.9688 14.125H9.1875L10.375 18.625H14.6875L15.8438 14.125H20.0625C19.5312 12.875 18.5938 11.9688 17.25 11.5312C17.4688 10.6562 17.826 9.8608 18.326 9.2045Z" />
+                </svg>
+                <span>Get Addon on CurseForge ↗</span>
+              </a>
             </div>
           )}
         </div>
@@ -214,13 +252,28 @@ export function MobileApp({
           <button
             type="button"
             className={`ms-m-pill-btn ${factionClass}`}
-            onClick={onCycleFaction}
-            title={`Faction: ${faction}`}
-            aria-label={`Switch faction (current: ${faction})`}
+            onClick={() => onSelectHomeFaction(otherFaction)}
+            disabled={!factionMarketsAvailable}
+            title={factionMarketsAvailable ? `Faction: ${homeFaction}` : 'This market is shared by both factions'}
+            aria-label={`Switch faction to ${otherFaction} (current: ${homeFaction})`}
+            data-testid="mobile-faction-switch"
           >
-            <FactionIcon faction={faction} />
-            <span>{faction === 'Neutral' ? 'Blackwater' : faction}</span>
+            <FactionIcon faction={homeFaction} />
+            <span>{homeFaction}</span>
           </button>
+          {nextMarket && (
+            <button
+              type="button"
+              className={`ms-m-pill-btn ${activeMarket?.kind === 'shared' ? 'is-neutral' : ''}`}
+              onClick={() => onSelectMarket(nextMarket.market)}
+              title={`Market: ${activeMarket?.label ?? market}`}
+              aria-label={`Switch market to ${nextMarket.label} (current: ${activeMarket?.label ?? market})`}
+              data-testid="mobile-market-switch"
+            >
+              {activeMarket?.kind === 'shared' && <FactionIcon faction="Neutral" />}
+              <span>{marketShortLabel(activeMarket)}</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -486,7 +539,7 @@ export function MobileApp({
         >
           <div className="ms-m-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="ms-m-sheet-header">
-              <strong style={{ color: '#f3d078' }}>Era &amp; Realm</strong>
+              <strong style={{ color: '#f3d078' }}>Era, Faction &amp; {partitionLabel}</strong>
               <button
                 type="button"
                 className="ms-m-pill-btn"
@@ -518,7 +571,49 @@ export function MobileApp({
               </div>
 
               <div style={{ fontSize: '12px', color: '#8b9bb4', fontWeight: 600, marginTop: '4px' }}>
-                Realm
+                Faction
+              </div>
+              <div className="ms-m-chips" role="group" aria-label="Your faction">
+                {(['Alliance', 'Horde'] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    aria-pressed={homeFaction === f}
+                    disabled={!factionMarketsAvailable}
+                    className={`ms-m-chip ${homeFaction === f ? 'is-active' : ''}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    onClick={() => onSelectHomeFaction(f)}
+                  >
+                    <FactionIcon faction={f} />
+                    <span>{f}</span>
+                  </button>
+                ))}
+              </div>
+              {!factionMarketsAvailable && (
+                <div style={{ fontSize: '11px', color: '#8b9bb4' }}>
+                  This {partitionLabel.toLowerCase()} has one auction house shared by both factions.
+                </div>
+              )}
+
+              <div style={{ fontSize: '12px', color: '#8b9bb4', fontWeight: 600, marginTop: '4px' }}>
+                Market
+              </div>
+              <div className="ms-m-chips" role="group" aria-label="Market" style={{ flexWrap: 'wrap' }}>
+                {markets.map((m) => (
+                  <button
+                    key={m.market}
+                    type="button"
+                    aria-pressed={market === m.market}
+                    className={`ms-m-chip ${market === m.market ? 'is-active' : ''}`}
+                    onClick={() => onSelectMarket(m.market)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ fontSize: '12px', color: '#8b9bb4', fontWeight: 600, marginTop: '4px' }}>
+                {partitionLabel}
               </div>
               {realms.map((r) => (
                 <button

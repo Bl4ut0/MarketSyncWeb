@@ -19,6 +19,6 @@
     "MARKETSYNC_DATA_BASE_URL": "https://raw.githubusercontent.com/Bl4ut0/MarketSyncData/master"
   },
   "triggers": {
-    "crons": ["5 * * * *"]
+    "crons": ["5 * * * *", "35 * * * *"]
   }
 }

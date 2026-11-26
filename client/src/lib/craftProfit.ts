@@ -17,9 +17,16 @@ export interface RecipeCatalog {
   recipes: CraftRecipe[];
   items: Record<number, string>;
   vendorPrices: Record<number, number>;
+  sellPrices?: Record<number, number>;
 }
 
-export type CraftQuotes = Record<number, { price: number; quantity: number }>;
+export interface CraftQuote {
+  price: number;
+  quantity: number;
+  icon?: string;
+  quality?: number;
+}
+export type CraftQuotes = Record<number, CraftQuote>;
 export type CraftStrategy = 'lowest' | 'buy' | 'craft';
 
 export interface CraftMaterial {
@@ -37,10 +44,44 @@ export interface CraftEstimate {
   output: number;
   materials: CraftMaterial[];
   cost: number | null;
+  directCost?: number | null;
   unitSalePrice: number | null;
   netSale: number | null;
   profit: number | null;
   roi: number | null;
+  unitVendorPrice: number | null;
+  vendorSale: number | null;
+  vendorProfit: number | null;
+  vendorRoi: number | null;
+}
+
+export type CatalogProfession = RecipeCatalog['professions'][number];
+
+/**
+ * Enchanting's profession id. Its recipes mostly enchant an item instead of
+ * creating one, so the catalog compiler cannot price them.
+ */
+export const ENCHANTING_PROFESSION_ID = 333;
+
+/**
+ * Explain the recipes the catalog compiler (MarketSyncData
+ * `scripts/compile-recipes.py`) left out of a profession. They are counted in
+ * `unsupportedCount` but not listed, so the UI can only report how many there
+ * are and why. Returns null when every recipe is priced.
+ */
+export function describeUnpricedRecipes(profession: CatalogProfession): string | null {
+  const count = profession.unsupportedCount;
+  if (!count) return null;
+  const noun = count === 1 ? 'recipe is' : 'recipes are';
+  const reason = profession.id === ENCHANTING_PROFESSION_ID
+    ? 'most enchants apply to gear and create no item to sell'
+    : 'they create no item, several items or a random amount, have unusable reagent data, use their own output as a reagent, or reference items missing from this build';
+  return `${count.toLocaleString()} ${profession.name} ${noun} not priced: ${reason}.`;
+}
+
+/** Professions to show: any with priced recipes or with recipes counted as unpriced. */
+export function visibleProfessions(catalog: Pick<RecipeCatalog, 'professions'>): CatalogProfession[] {
+  return catalog.professions.filter((p) => p.recipeCount > 0 || p.unsupportedCount > 0);
 }
 
 const catalogs = new Map<FlavorId, Promise<RecipeCatalog>>();
@@ -49,7 +90,7 @@ export function loadRecipeCatalog(flavor: FlavorId): Promise<RecipeCatalog> {
   const prior = catalogs.get(flavor);
   if (prior) return prior;
   const path = encodeURIComponent(`datasets/${flavor}/recipes.json`);
-  const request = fetch(`/api/datasets/snapshot?path=${path}`, { signal: AbortSignal.timeout(12000) })
+  const request = fetch(`/api/datasets/snapshot?path=${path}&v=2`, { signal: AbortSignal.timeout(12000) })
     .then(async (response) => {
       if (response.status === 404) throw new Error('No recipe catalog has been published for this edition.');
       if (!response.ok) throw new Error('Could not load the recipe catalog.');
@@ -155,11 +196,32 @@ export function createCraftEvaluator(catalog: RecipeCatalog, quotes: CraftQuotes
     const materials = planMaterials(recipe, batches, strategy,
       { bought: new Map(), surplus: new Map() }, new Set([recipe.itemId]));
     const cost = sumCosts(materials);
+    const directCost = strategy === 'buy'
+      ? cost
+      : sumCosts(planMaterials(recipe, batches, 'buy', { bought: new Map(), surplus: new Map() }, new Set([recipe.itemId])));
     const output = recipe.yield * batches;
     const unitSalePrice = quotes[recipe.itemId]?.price ?? null;
     const netSale = unitSalePrice === null ? null : Math.floor(unitSalePrice * output * (100 - CRAFT_SALE_FEE) / 100);
     const profit = cost === null || netSale === null ? null : netSale - cost;
-    return { recipe, batches, output, materials, cost, unitSalePrice, netSale, profit,
-      roi: profit !== null && cost && cost > 0 ? 100 * profit / cost : null };
+    const rawSell = catalog.sellPrices?.[recipe.itemId];
+    const unitVendorPrice = typeof rawSell === 'number' && rawSell > 0 ? rawSell : null;
+    const vendorSale = unitVendorPrice === null ? null : unitVendorPrice * output;
+    const vendorProfit = cost === null || vendorSale === null ? null : vendorSale - cost;
+    return {
+      recipe,
+      batches,
+      output,
+      materials,
+      cost,
+      directCost,
+      unitSalePrice,
+      netSale,
+      profit,
+      roi: profit !== null && cost && cost > 0 ? (100 * profit) / cost : null,
+      unitVendorPrice,
+      vendorSale,
+      vendorProfit,
+      vendorRoi: vendorProfit !== null && cost && cost > 0 ? (100 * vendorProfit) / cost : null,
+    };
   };
 }
