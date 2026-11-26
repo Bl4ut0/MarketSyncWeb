@@ -54,7 +54,9 @@ code {
 
 .ms-header-top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* Title and actions keep their natural width; the faction crests are centred in
+     the free space between them. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -472,6 +474,52 @@ code {
 .ms-faction-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 .ms-faction-btn.is-alliance.is-active { background: rgba(28, 72, 140, 0.35); color: #8cc2ff; }
 .ms-faction-btn.is-horde.is-active { background: rgba(140, 28, 28, 0.35); color: #ff8a8a; }
+
+/* Site-wide faction choice in the header, between the title and the actions. */
+.ms-header-faction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ms-header-top > .ms-header-actions { justify-self: end; }
+.ms-header-faction .ms-faction-switch {
+  gap: 0.75rem;
+  border: 0;
+  overflow: visible;
+}
+.ms-header-faction .ms-faction-btn {
+  padding: 0.3rem;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--frame-radius);
+  line-height: 0;
+}
+.ms-header-faction .ms-faction-btn + .ms-faction-btn { border-left: 1px solid var(--border-subtle); }
+.ms-faction-crest {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: calc(var(--frame-radius) - 1px);
+  filter: grayscale(0.85) brightness(0.65);
+  transition: filter 0.15s ease;
+}
+.ms-faction-btn:hover:not(:disabled) .ms-faction-crest,
+.ms-faction-btn.is-active .ms-faction-crest { filter: none; }
+.ms-header-faction .ms-faction-btn.is-alliance.is-active {
+  background: rgba(28, 72, 140, 0.35);
+  border-color: #4f8fe0;
+  box-shadow: 0 0 10px rgba(79, 143, 224, 0.55);
+}
+.ms-header-faction .ms-faction-btn.is-horde.is-active {
+  background: rgba(140, 28, 28, 0.35);
+  border-color: #d84a4a;
+  box-shadow: 0 0 10px rgba(216, 74, 74, 0.55);
+}
+
+@media (max-width: 980px) {
+  .ms-header-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .ms-header-faction { grid-column: 1 / -1; justify-content: flex-start; }
+}
 
 .ms-field-label {
   font-size: 0.76rem;

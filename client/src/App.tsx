@@ -86,6 +86,11 @@ const checkedDate = new Intl.DateTimeFormat(undefined, {
 const harborAuction = document.body.hasAttribute('data-harbor-auction');
 const exploreOrigin = 'https://explore.bl4ut0.dev';
 const CURSEFORGE_ADDON_URL = 'https://www.curseforge.com/wow/addons/marketsync';
+// In-game PvP crest icons, served from the same icon CDN as item icons.
+const FACTION_CREST_ICONS: Record<HomeFaction, string> = {
+  Alliance: 'achievement_pvp_a_a',
+  Horde: 'achievement_pvp_h_h',
+};
 const mobileLayoutQuery = '(hover: none) and (pointer: coarse)';
 const mobileSortOptions = {
   price_asc: ['minPrice', 'asc'],
@@ -1109,12 +1114,20 @@ export function App() {
           key={f}
           type="button"
           aria-pressed={homeFaction === f}
+          aria-label={f}
+          title={factionMarketsAvailable ? f : `${f} (this market is shared by both factions)`}
           disabled={!factionMarketsAvailable}
           data-testid={idPrefix ? `${idPrefix}faction-${f}` : `market-tab-${f}`}
           className={`ms-faction-btn is-${f.toLowerCase()} ${homeFaction === f ? 'is-active' : ''}`}
           onClick={() => chooseHomeFaction(f)}
         >
-          {f}
+          <img
+            className="ms-faction-crest"
+            src={getItemIconUrl(FACTION_CREST_ICONS[f], 'large')}
+            alt=""
+            width={40}
+            height={40}
+          />
         </button>
       ))}
     </div>
@@ -1286,6 +1299,11 @@ export function App() {
               </div>
             </div>
 
+            {/* One faction choice for the whole site: every tab reads homeFaction. */}
+            <div className="ms-header-faction">
+              {factionSwitch('')}
+            </div>
+
             <div className="ms-header-actions">
               <div className="ms-header-cta-row">
                 <a
@@ -1444,10 +1462,6 @@ export function App() {
         {activeTab === 'ah' && (
           <section className="ms-panel ms-auction-panel" aria-label="Auction House Browser">
             <div className="ms-controls-bar">
-              <div className="ms-field-group">
-                <span className="ms-field-label">Faction</span>
-                {factionSwitch('')}
-              </div>
               <div className="ms-field-group">
                 <label htmlFor="ruleset-select">{partitionLabel}</label>
                 <select
@@ -1990,7 +2004,6 @@ export function App() {
             <div className="ms-panel" style={{ padding: '12px 16px' }}>
               <div className="ms-market-bar" style={{ margin: 0 }}>
                 <div className="ms-inline-row" style={{ gap: '12px', flexWrap: 'wrap' }}>
-                  {factionSwitch('analytics-')}
                   <div className="ms-field-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
                     <label htmlFor="analytics-ruleset-select" style={{ margin: 0 }}>
                       {partitionLabel}
