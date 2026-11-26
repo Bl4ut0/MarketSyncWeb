@@ -25,7 +25,31 @@ export interface CraftQuote {
   quantity: number;
   icon?: string;
   quality?: number;
+  /** From the item catalog; used by the Money Makers view (disenchanting, names). */
+  name?: string;
+  itemClass?: number;
+  itemLevel?: number;
 }
+
+/** Wowhead icon slugs for the profession skill-line IDs the recipe catalogs use. */
+export const PROFESSION_ICONS: Record<number, string> = {
+  40: 'ability_poisons',
+  129: 'spell_holy_sealofsacrifice',
+  164: 'trade_blacksmithing',
+  165: 'inv_misc_armorkit_17',
+  171: 'trade_alchemy',
+  182: 'trade_herbalism',
+  185: 'inv_misc_food_15',
+  186: 'trade_mining',
+  197: 'trade_tailoring',
+  202: 'trade_engineering',
+  333: 'trade_engraving',
+  356: 'trade_fishing',
+  393: 'inv_misc_pelt_wolf_01',
+  755: 'inv_misc_gem_01',
+  773: 'inv_inscription_tradeskill01',
+  794: 'trade_archaeology',
+};
 export type CraftQuotes = Record<number, CraftQuote>;
 export type CraftStrategy = 'lowest' | 'buy' | 'craft';
 

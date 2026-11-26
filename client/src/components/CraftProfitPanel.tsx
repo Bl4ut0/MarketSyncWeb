@@ -12,6 +12,7 @@ import {
   CRAFT_SALE_FEE,
   describeUnpricedRecipes,
   loadRecipeCatalog,
+  PROFESSION_ICONS,
   visibleProfessions,
   type CraftEstimate,
   type CraftMaterial,
@@ -25,25 +26,6 @@ import { ItemTooltip } from './ItemTooltip.js';
 
 const PAGE_SIZE = 50;
 const EMPTY_QUOTES: CraftQuotes = {};
-
-const PROFESSION_ICONS: Record<number, string> = {
-  40: 'ability_poisons',
-  129: 'spell_holy_sealofsacrifice',
-  164: 'trade_blacksmithing',
-  165: 'inv_misc_armorkit_17',
-  171: 'trade_alchemy',
-  182: 'trade_herbalism',
-  185: 'inv_misc_food_15',
-  186: 'trade_mining',
-  197: 'trade_tailoring',
-  202: 'trade_engineering',
-  333: 'trade_engraving',
-  356: 'trade_fishing',
-  393: 'inv_misc_pelt_wolf_01',
-  755: 'inv_misc_gem_01',
-  773: 'inv_inscription_tradeskill01',
-  794: 'trade_archaeology',
-};
 
 const QUALITY_COLORS: Record<number, string> = {
   0: '#9d9d9d',

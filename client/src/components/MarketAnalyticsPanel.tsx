@@ -24,9 +24,11 @@ export interface MarketAnalyticsPanelProps {
   activeCategory: string;
   onCategoryChange: (catId: string) => void;
   onSelectItem: (row: EnrichedAuctionRow, comparison?: ItemAnalyticsDetails) => void;
+  /** Desktop "Money Makers" view; the tab is shown only when this is provided. */
+  moneyMakers?: ReactNode;
 }
 
-type AnalyticsSection = 'overview' | 'movers' | 'stable' | 'volume';
+type AnalyticsSection = 'overview' | 'movers' | 'stable' | 'volume' | 'money';
 type MobileSection = 'map' | 'deals' | 'gainers' | 'stable' | 'volume';
 type Leaderboard = Exclude<MobileSection, 'map'>;
 type MapMetric = 'gold' | 'units';
@@ -233,6 +235,7 @@ export function MarketAnalyticsPanel({
   activeCategory,
   onCategoryChange,
   onSelectItem,
+  moneyMakers,
 }: MarketAnalyticsPanelProps) {
   const displayRow = (row: EnrichedAuctionRow): EnrichedAuctionRow => {
     if (row.isPetCage || row.icon !== DEFAULT_ITEM_ICON) return row;
@@ -285,6 +288,7 @@ export function MarketAnalyticsPanel({
       items = [...mapSource, ...lists.deals.slice(0, 7), ...lists.gainers.slice(0, 7),
         ...lists.stable.slice(0, 7), ...lists.volume.slice(0, 7)];
     } else if (section === 'movers') items = lists[moversView];
+    else if (section === 'money') items = [...lists.deals, ...lists.stable, ...lists.gainers];
     else items = lists[section];
 
     const ids = [...new Set(items.map(({ row }) => row)
@@ -920,6 +924,7 @@ export function MarketAnalyticsPanel({
               ['movers', 'Major Movers & Below-Median Deals'],
               ['stable', 'Structurally Stable'],
               ['volume', 'Large Quantity & Money Flow'],
+              ...(moneyMakers ? [['money', 'Money Makers'] as const] : []),
             ] as const
           ).map(([key, label]) => (
             <button
@@ -1082,7 +1087,9 @@ export function MarketAnalyticsPanel({
         </aside>
 
         <div className="ms-an-content">
-          {loading && !analytics ? (
+          {section === 'money' && moneyMakers ? (
+            moneyMakers
+          ) : loading && !analytics ? (
             <div className="ms-an-empty">
               Loading {windowLabel} market analytics...
             </div>

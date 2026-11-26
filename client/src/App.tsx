@@ -24,6 +24,7 @@ import {
 import { AlertsPanel } from './components/AlertsPanel.js';
 import { CopperDisplay } from './components/CopperDisplay.js';
 import { CraftProfitPanel } from './components/CraftProfitPanel.js';
+import { MoneyMakersPanel } from './components/MoneyMakersPanel.js';
 import { ItemBadge } from './components/ItemBadge.js';
 import { ItemDetailModal } from './components/ItemDetailModal.js';
 import { HarborPanel, harborUrl } from './components/HarborPanel.js';
@@ -86,6 +87,7 @@ const checkedDate = new Intl.DateTimeFormat(undefined, {
 const harborAuction = document.body.hasAttribute('data-harbor-auction');
 const exploreOrigin = 'https://explore.bl4ut0.dev';
 const CURSEFORGE_ADDON_URL = 'https://www.curseforge.com/wow/addons/marketsync';
+const ANALYTICS_WINDOW_LABELS: Record<number, string> = { 24: '24-hour', 168: '7-day', 720: '30-day' };
 // In-game PvP crest icons, served from the same icon CDN as item icons.
 const FACTION_CREST_ICONS: Record<HomeFaction, string> = {
   Alliance: 'achievement_pvp_a_a',
@@ -2060,6 +2062,17 @@ export function App() {
               activeCategory={analyticsCategory}
               onCategoryChange={setAnalyticsCategory}
               onSelectItem={openItem}
+              moneyMakers={
+                <MoneyMakersPanel
+                  flavor={flavor}
+                  path={selectedBlockPath}
+                  partitionKey={partitionKey}
+                  faction={faction}
+                  analytics={marketAnalytics}
+                  windowLabel={ANALYTICS_WINDOW_LABELS[analyticsHours] ?? `${analyticsHours}-hour`}
+                  onSelectItem={(row) => openItem(row)}
+                />
+              }
             />}
           </div>
         )}

@@ -521,6 +521,110 @@ code {
   .ms-header-faction { grid-column: 1 / -1; justify-content: flex-start; }
 }
 
+/* ===== Money Makers (Analytics) ===== */
+.ms-mm { display: flex; flex-direction: column; gap: 0.75rem; }
+.ms-mm-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ms-mm-tabs .ms-an-seg-btn { display: inline-flex; align-items: center; gap: 0.35rem; }
+.ms-mm-count {
+  font-size: 0.72rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+}
+.ms-mm-blurb, .ms-mm-note { margin: 0; font-size: 0.82rem; color: var(--text-secondary); }
+.ms-mm-note { font-size: 0.76rem; opacity: 0.85; }
+.ms-mm-profs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ms-mm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.ms-mm-chip img { border-radius: 3px; }
+.ms-mm-chip.is-active { border-color: var(--accent-primary); color: var(--text-accent); }
+.ms-mm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.65rem;
+}
+.ms-mm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--frame-radius);
+  background: var(--bg-input);
+  min-width: 0;
+}
+.ms-mm-card-head { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+.ms-mm-icon { width: 32px; height: 32px; border-radius: 4px; flex: none; }
+.ms-mm-title { display: flex; flex-direction: column; min-width: 0; gap: 0.1rem; }
+.ms-mm-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ms-mm-name:hover { text-decoration: underline; }
+.ms-mm-sub { display: flex; gap: 0.45rem; font-size: 0.72rem; color: var(--text-secondary); }
+.ms-mm-kind { color: var(--text-accent); }
+.ms-mm-prof { display: inline-flex; align-items: center; gap: 0.25rem; }
+.ms-mm-profit { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.ms-mm-profit-value { font-size: 1.02rem; font-weight: 700; color: #4ade80; }
+.ms-mm-roi { font-size: 0.75rem; color: var(--text-secondary); }
+.ms-mm-facts { margin: 0; display: grid; gap: 0.15rem; font-size: 0.78rem; }
+.ms-mm-facts > div { display: flex; justify-content: space-between; gap: 0.5rem; }
+.ms-mm-facts dt { color: var(--text-secondary); }
+.ms-mm-facts dd { margin: 0; }
+.ms-mm-facts dd.is-up { color: #4ade80; }
+.ms-mm-facts dd.is-down { color: #f87171; }
+.ms-mm-drops {
+  margin: 0;
+  padding: 0.35rem 0 0;
+  list-style: none;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 0.74rem;
+  display: grid;
+  gap: 0.1rem;
+}
+.ms-mm-drops li { display: flex; justify-content: space-between; gap: 0.5rem; }
+.ms-mm-reason { margin: 0; font-size: 0.78rem; color: var(--text-secondary); }
+.ms-mm-signal {
+  align-self: flex-start;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+}
+.ms-mm-signal.is-buy { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+.ms-mm-signal.is-sell { background: rgba(250, 204, 21, 0.15); color: #facc15; }
+.ms-mm-signal.is-avoid { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+.ms-mm-more { align-self: center; }
+.ms-mm-thin {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
 .ms-field-label {
   font-size: 0.76rem;
   text-transform: uppercase;

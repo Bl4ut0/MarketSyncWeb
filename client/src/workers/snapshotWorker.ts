@@ -835,6 +835,9 @@ workerScope.onmessage = (event: MessageEvent<WorkerRequest>) => {
             quantity: 0,
             icon: cachedMeta?.icon,
             quality: catItem?.quality ?? cachedMeta?.quality,
+            name: catItem?.name ?? cachedMeta?.name,
+            itemClass: catItem?.itemClass,
+            itemLevel: catItem?.itemLevel,
           };
           quote.price = Math.min(quote.price, minPrice);
           quote.quantity += totalQty;
