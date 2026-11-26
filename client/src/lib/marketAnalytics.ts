@@ -60,6 +60,61 @@ export interface MarketAnalyticsPayload {
   volumeMovers: MarketAnalyticsItem[];
   categories: MarketAnalyticsCategory[];
   unhydratedItemIds: number[];
+  /** Listings left out of every total and list; see {@link findMarketOutliers}. */
+  excludedOutliers?: ExcludedOutlier[];
+}
+
+/** A listing excluded from market analytics as an outlier. */
+export interface ExcludedOutlier {
+  itemKey: string;
+  itemId: number;
+  name: string;
+  category: string;
+  minPrice: number;
+  totalQty: number;
+  listings: number;
+  marketValueCopper: number;
+}
+
+/** An outlier has at most this many listings... */
+export const OUTLIER_MAX_LISTINGS = 2;
+/** ...is worth more than this share of the whole market... */
+export const OUTLIER_MIN_SHARE = 0.1;
+/** ...and is worth at least this many times the next most valuable item. */
+export const OUTLIER_MIN_RATIO = 5;
+
+/**
+ * Finds listings that would dominate the market value on their own, such as a
+ * single item listed for millions of gold. Taken from the most valuable item
+ * down: an item is an outlier only when it has few listings, a large share of
+ * the market that remains, and dwarfs the next item. The first item that fails
+ * stops the search, so ordinary expensive goods are never removed.
+ */
+export function findMarketOutliers<T>(
+  entries: readonly T[],
+  value: (entry: T) => number,
+  listings: (entry: T) => number,
+  total: number,
+): T[] {
+  const sorted = [...entries].sort((a, b) => value(b) - value(a));
+  const outliers: T[] = [];
+  let remaining = total;
+  for (let i = 0; i < sorted.length; i += 1) {
+    const current = sorted[i]!;
+    const next = sorted[i + 1];
+    const worth = value(current);
+    if (listings(current) > OUTLIER_MAX_LISTINGS) break;
+    if (!(worth > OUTLIER_MIN_SHARE * remaining)) break;
+    if (next !== undefined && worth < OUTLIER_MIN_RATIO * value(next)) break;
+    outliers.push(current);
+    remaining -= worth;
+  }
+  return outliers;
+}
+
+/** The analytics sector an auction row is counted in. */
+export function analyticsCategoryOf(row: Pick<EnrichedAuctionRow, 'ahCategory' | 'isFallback' | 'isPetCage'>): string {
+  return row.ahCategory ?? (row.isFallback && !row.isPetCage ? 'unclassified' : 'miscellaneous');
 }
 
 type PriceAndQuantity = [price: number, quantity: number];
@@ -177,13 +232,25 @@ export function analyzeMarket(
     }
   >();
 
+  // Listings that would dominate the market on their own (a single item listed
+  // for millions of gold) are left out of every total, share and list.
+  const rowValue = (row: EnrichedAuctionRow) => row.minPrice * Math.max(1, row.totalQty);
+  const outlierRows = findMarketOutliers(
+    groupedRows, rowValue, (row) => row.listings,
+    groupedRows.reduce((sum, row) => sum + rowValue(row), 0),
+  );
+  const outlierKeys = new Set(outlierRows.map((row) => row.itemKey));
+  const excludedOutliers: ExcludedOutlier[] = outlierRows.map((row) => ({
+    itemKey: row.itemKey, itemId: row.itemId, name: row.name, category: analyticsCategoryOf(row),
+    minPrice: row.minPrice, totalQty: row.totalQty, listings: row.listings, marketValueCopper: rowValue(row),
+  }));
+
   const allItems: MarketAnalyticsItem[] = [];
   const byCategory = new Map<string, MarketAnalyticsItem[]>();
   for (const row of groupedRows) {
-    const catId =
-      row.ahCategory ??
-      (row.isFallback && !row.isPetCage ? 'unclassified' : 'miscellaneous');
-    const mktVal = row.minPrice * Math.max(1, row.totalQty);
+    if (outlierKeys.has(row.itemKey)) continue;
+    const catId = analyticsCategoryOf(row);
+    const mktVal = rowValue(row);
 
     // Collect historical price & quantity series across chronological snapshots
     const prices: number[] = [];
@@ -320,6 +387,7 @@ export function analyzeMarket(
       sampledCaptures,
       categories,
       flavor,
+      category === 'all' ? excludedOutliers : excludedOutliers.filter((o) => o.category === category),
     ),
   };
 }
@@ -337,6 +405,7 @@ function summarizeMarket(
   sampledCaptures: number,
   categories: MarketAnalyticsCategory[],
   flavor: FlavorId,
+  excludedOutliers: ExcludedOutlier[] = [],
 ): MarketAnalyticsPayload {
   let totalMarketValue = 0;
   let totalUnits = 0;
@@ -456,5 +525,6 @@ function summarizeMarket(
     volumeMovers,
     categories,
     unhydratedItemIds: Array.from(surfaced).slice(0, 50),
+    excludedOutliers,
   };
 }

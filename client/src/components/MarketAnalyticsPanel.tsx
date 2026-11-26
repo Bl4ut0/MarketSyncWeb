@@ -986,6 +986,20 @@ export function MarketAnalyticsPanel({
             <span className="ms-an-kpi-sub">
               {eraLabel} · {marketLabel} · {faction}
             </span>
+            {(analytics?.excludedOutliers?.length ?? 0) > 0 && (
+              <span
+                className="ms-an-kpi-sub ms-an-outliers"
+                data-testid="excluded-outliers"
+                title="Listings with one or two auctions that would dominate the total on their own are left out of every figure and list."
+              >
+                Excludes {analytics!.excludedOutliers!.map((o, i) => (
+                  <span key={o.itemKey}>
+                    {i > 0 && ', '}
+                    {o.name} at <CopperDisplay copper={o.minPrice} />
+                  </span>
+                ))}
+              </span>
+            )}
           </div>
 
           <div className="ms-an-kpi-card">

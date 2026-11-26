@@ -521,6 +521,8 @@ code {
   .ms-header-faction { grid-column: 1 / -1; justify-content: flex-start; }
 }
 
+.ms-an-outliers { color: #facc15; }
+
 /* ===== Money Makers (Analytics) ===== */
 .ms-mm { display: flex; flex-direction: column; gap: 0.75rem; }
 .ms-mm-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }

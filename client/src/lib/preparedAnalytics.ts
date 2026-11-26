@@ -1,12 +1,18 @@
 import type { DatasetBlockMeta } from '@marketsync/shared';
-import type { MarketAnalyticsItem, MarketAnalyticsPayload } from './marketAnalytics.js';
+import {
+  analyticsCategoryOf,
+  findMarketOutliers,
+  type ExcludedOutlier,
+  type MarketAnalyticsItem,
+  type MarketAnalyticsPayload,
+} from './marketAnalytics.js';
 import type { HistoryHours } from './priceHistory.js';
 
 const lists = [
   'blockMapByGold', 'blockMapByUnits', 'gainers', 'deals', 'stableAnchors', 'volumeMovers',
 ] as const;
 type ListName = (typeof lists)[number];
-type PackedView = Pick<MarketAnalyticsPayload, 'macro' | 'unhydratedItemIds'> &
+type PackedView = Pick<MarketAnalyticsPayload, 'macro' | 'unhydratedItemIds' | 'excludedOutliers'> &
   Record<ListName, number[]>;
 
 interface PreparedAnalyticsReport {
@@ -40,6 +46,7 @@ export function packAnalyticsReport(
     views[key] = {
       macro: payload.macro,
       unhydratedItemIds: payload.unhydratedItemIds,
+      excludedOutliers: payload.excludedOutliers ?? [],
       ...rankedLists,
     } as PackedView;
   }
@@ -74,19 +81,80 @@ export function unpackAnalyticsView(report: PreparedAnalyticsReport, category: s
     unhydratedItemIds: [],
     blockMapByGold: [], blockMapByUnits: [], gainers: [], deals: [], stableAnchors: [], volumeMovers: [],
   };
-  const rankedLists = Object.fromEntries(lists.map((name) => [
-    name,
-    selected[name].map((id) => {
-      const item = report.items[id];
-      if (!item?.row) throw new Error('Invalid market analytics item reference');
-      return upgradeLegacyItem(item);
-    }),
-  ])) as Record<ListName, MarketAnalyticsItem[]>;
-  return {
+  const resolve = (ids: number[]) => ids.map((id) => {
+    const item = report.items[id];
+    if (!item?.row) throw new Error('Invalid market analytics item reference');
+    return upgradeLegacyItem(item);
+  });
+  const rankedLists = Object.fromEntries(lists.map((name) => [name, resolve(selected[name])])) as
+    Record<ListName, MarketAnalyticsItem[]>;
+  const payload: MarketAnalyticsPayload = {
     ...rankedLists,
     categories: report.categories,
     macro: selected.macro,
     unhydratedItemIds: selected.unhydratedItemIds,
+    excludedOutliers: selected.excludedOutliers,
+  };
+  if (selected.excludedOutliers) return payload;
+  // Reports built before outliers were excluded: find them in the market-wide
+  // ranking and take them out of this view.
+  const allByGold = resolve(view.blockMapByGold);
+  const outliers = findMarketOutliers(allByGold, (it) => it.marketValueCopper,
+    (it) => it.row.listings, view.macro.totalMarketValue);
+  return withoutOutliers(payload, outliers, category);
+}
+
+function toExcluded(item: MarketAnalyticsItem): ExcludedOutlier {
+  const { row } = item;
+  return {
+    itemKey: row.itemKey, itemId: row.itemId, name: row.name, category: analyticsCategoryOf(row),
+    minPrice: row.minPrice, totalQty: row.totalQty, listings: row.listings,
+    marketValueCopper: item.marketValueCopper,
+  };
+}
+
+/**
+ * Removes market-wide outliers from a report view built before they were
+ * excluded: from every list, from the sector totals, and from this view's
+ * macro totals when the outlier belongs to it.
+ */
+export function withoutOutliers(
+  payload: MarketAnalyticsPayload,
+  outliers: MarketAnalyticsItem[],
+  category: string,
+): MarketAnalyticsPayload {
+  if (outliers.length === 0) return { ...payload, excludedOutliers: [] };
+  const keys = new Set(outliers.map((it) => it.row.itemKey));
+  const inView = outliers.filter((it) => category === 'all' || analyticsCategoryOf(it.row) === category);
+  const macro = { ...payload.macro };
+  for (const { row, marketValueCopper, priceChangePct } of inView) {
+    macro.totalMarketValue -= marketValueCopper;
+    macro.totalUnits -= row.totalQty;
+    macro.totalListings -= row.listings;
+    macro.uniqueItems -= 1;
+    if (priceChangePct > 3.5) macro.risingCount -= 1;
+    else if (priceChangePct < -3.5) macro.fallingCount -= 1;
+    else macro.stableCount -= 1;
+  }
+  const categories = payload.categories.map((cat) => {
+    const removed = outliers.filter((it) => analyticsCategoryOf(it.row) === cat.id);
+    if (removed.length === 0) return cat;
+    return {
+      ...cat,
+      itemCount: cat.itemCount - removed.length,
+      totalUnits: cat.totalUnits - removed.reduce((sum, it) => sum + it.row.totalQty, 0),
+      totalMarketValue: cat.totalMarketValue - removed.reduce((sum, it) => sum + it.marketValueCopper, 0),
+    };
+  });
+  const filtered = Object.fromEntries(lists.map((name) => [
+    name, payload[name].filter((it) => !keys.has(it.row.itemKey)),
+  ])) as Record<ListName, MarketAnalyticsItem[]>;
+  return {
+    ...payload,
+    ...filtered,
+    macro,
+    categories,
+    excludedOutliers: inView.map(toExcluded),
   };
 }
 
